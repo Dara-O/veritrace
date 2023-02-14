@@ -1,14 +1,91 @@
 import argparse
 import xml.etree.ElementTree as ET
-import copy
 
+# FIXME: Should const and Instant Ports be vars (or inherit vars)?
+# FIXME: Figure out a way to find drivers that are const
+# FIXME: Figure out a way to report connections to InstancePort that are constant
+# FIXME: Finish adding Module Instance's findInputDrivers feature
 
-class TypeTable():
+class Const():
     """
+    Represtents a constant value typically used to drive vars
     """
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self, xml_element, parent_obj, root) -> None:
+        """
+        Parameters:
+
+        xml_element : an xml.etree.ElementTree.Element object. This object is...
+                      ...the xml node that defines the constant
+
+        parent_obj  : a reference to the object where this constant is defined. 
+                      This object contains an xml element that is the ancestor of 'xml_element'
+
+        root        : object of Type ModuleDef, represents the root module in the design
+        """
+
+        self.xml_element = xml_element
+        self.parent_obj = parent_obj
+        self.root = root
+
+class Var():
+    """
+    Represents a Var. This may be:
+        - param or localparam
+        - reg or wire
+    """
+
+    def __init__(self, xml_element, parent_obj, root):
+        """
+        Parameters:
+
+        xml_element : an xml.etree.ElementTree.Element object. This object is...
+                      ...the xml node that defines the Var
+
+        parent_obj  :   module where this var is found
+
+        root        : object of Type ModuleDef, represents the root module in the design
+        """
+
+        self.xml_element = xml_element
+        self.parent_obj = parent_obj
+        self.root = root
+
+    def getHierPath(self) -> str:
+        """
+        Returns:
+
+        A string denoting the hierarchical path to this entity in rtl
+        """
+        return self.parent_obj.getHierPath() + "." + self.xml_element.get('name')
+    
+    def findVarLoads(self):
+        """
+        Returns 
+        
+        List of objects which are loads of this variable
+            Note:
+            - Objects may be:
+                - port
+                - var
+        """
+
+        return self.parent_obj.findVarLoads(self.xml_element.get('name'))
+    
+    def findVarDrivers(self):
+        """
+        Returns 
+        
+        List of objects which are loads of this variable
+            Note:
+            - Objects may be:
+                - port
+                - var
+                - const
+        """
+
+        return self.parent_obj.findVarDrivers(self.xml_element.get('name'))
+
 
 class Assign():
     """
@@ -18,7 +95,7 @@ class Assign():
         - contassign
     """
 
-    def __init__(self, xml_element, parent_obj) -> None:
+    def __init__(self, xml_element, parent_obj, root) -> None:
         """
         Parameters:
 
@@ -27,13 +104,16 @@ class Assign():
 
         parent_obj  : an object which is an ancestor of this object (according to xml hierarchy)
                         This is typically a Module 
+
+        root        : object of Type ModuleDef, represents the root module in the design
         """
 
         self.xml_element = xml_element
         self.parent_obj = parent_obj
+        self.root = root
 
-        self.drivers = Assign.getDrivers(xml_element)
-        self.loads = Assign.getLoads(xml_element)
+        self.drivers_xml = Assign.getDrivers(xml_element)
+        self.loads_xml = Assign.getLoads(xml_element)
 
     def getLoads(xml_element) -> list:
         """
@@ -94,8 +174,16 @@ class Assign():
 
         out = []
 
-        # Every child except the last child are typically drivers
-        driver_children = xml_element.findall("./*")[:-1]
+        children = xml_element.findall("./*")
+        
+        driver_children = None
+        if(children[-1].tag == 'delay'):
+            # When last child is a delay, every child except the second to last child are typically drivers
+            driver_children = xml_element.findall("./*")[:-2]
+        else:
+            # Every child except the last child are typically drivers
+            driver_children = xml_element.findall("./*")[:-1]
+
         for driver_child in driver_children:
             if(driver_child.tag != "varref" and driver_child.tag != "const"):
                 out.extend(
@@ -107,74 +195,30 @@ class Assign():
 
         return out
 
-
-class Var():
-    """
-    Represents a variable which may be:
-        - module port
-        - internal wire/reg (i.e. connectable)
-        - localparam/param
-    """
-
-    def __init__(self, xml_element, parent_obj):
-        """
-        Parameters:
-
-        xml_element : an xml.etree.ElementTree.Element object. This object is...
-                      ...the xml node that defines the Var
-
-        parent_obj  : a reference to the object where this var is defined. 
-                      This object contains an xml element that is the ancestor of 'xml_element'
-        """
-
-        self.xml_element = xml_element
-        self.parent_obj = parent_obj
-
-    
-    def getHierPath(self) -> str:
-        """
-        Returns:
-
-        Hierarchical path of this instnace from the root (or top) module
-        """
-
-        return self.parent_obj.getHierPath() + "." + self.xml_element.get('name')
-    
-    def findVarLoads(self):
-        """
-        Returns 
-        
-        List of objects which are loads of this variable
-            Note:
-            - Objects may be:
-                - port
-                - var
-        """
-
-        return self.parent_obj.findVarLoads(self.xml_element.get('name'))
-
-
 class InstancePort():
     """
     Represents ports on module instances
     """
 
-    def __init__(self, xml_element, parent_obj):
+    def __init__(self, xml_element, parent_obj, root):
         """
         Parameters:
 
-        xml_element : an xml.etree.ElementTree.Element object. This object is...
-                      ...the xml node that defines the Instanceport
+        xml_element :   an xml.etree.ElementTree.Element object. This object is...
+                        ...the xml node that defines the Instanceport
 
-        parent_obj  : a reference to the Instance object where this port is defined. 
-                      This object contains an xml element that is the ancestor of 'xml_element'
+        parent_obj  :   a reference to the Instance object where this port is defined. 
+                        This object contains an xml element that is the ancestor of 'xml_element'
+
+        root        :   object of Type ModuleDef, represents the root module in the design
         """
         self.xml_element = xml_element
         self.parent_obj = parent_obj
+        self.root = root
 
-        self.connections = self.getConnections(xml_element)
+        self.connections = self._populateVarConnections(xml_element)
 
-    def getConnections(self, xml_element):
+    def _populateVarConnections(self, xml_element):
         """
         Returns 
         
@@ -196,15 +240,23 @@ class InstancePort():
 
         return out_dict
     
-    def getHierPath(self) -> str:
+    def getHierPath(self):
         """
-        Returns:
+        Returns
 
-        Hierarchical path of this instnace from the root (or top) module
+        A string denoting the hierarchical path to this entity in rtl
         """
 
-        return self.parent_obj.getHierPath() + "." + self.xml_element.get('name')
-    
+        out = ""
+
+        if(self.parent_obj is None):
+            Exception(f"InstancePort '{self.xml_element.get('name')}' has no parent."\
+                        +f" XML element attributes: {self.xml_element.items()}")
+        else:
+            out = self.parent_obj.getHierPath() + "." + self.xml_element.get('name')
+
+        return out
+
     def findVarLoads(self):
         """
         Returns 
@@ -231,32 +283,64 @@ class InstancePort():
 
         return self.parent_obj.findVarDrivers(self.xml_element.get('name'))
 
-
 class ModuleInstance():
     """
-    Represent module instances.
+    Represent a module instatiation
     """
 
-    def __init__(self, xml_element, parent_obj):
+    def __init__(self, xml_element, xml_modules, parent_obj, root):
         """
         Parameters:
 
-        xml_element : an xml.etree.ElementTree.Element object. This object is...
-                      ...the xml node that defines the Instance
+        xml_element :   an xml.etree.ElementTree.Element object. This object is...
+                        ...the xml node that defines the Instance
+        
+        xml_modules :   list of xml.etree.ElementTree.Elements objects for all submodules
+        
+        parent_obj  :   module where this instance is found
 
-        parent_obj  : a reference to the Module where this Instance is defined. 
-                      This object contains an xml element that is the ancestor of 'xml_element'
+        root        :   object of Type ModuleDef, represents the root module in the design
         """
+
         self.xml_element = xml_element
         self.parent_obj = parent_obj
-        self.module_obj = None 
+        self.root = root
+    
+        self.module_def = self._createModuleDef(xml_element, xml_modules, root)
+        self.ports = self._populateInstancePorts(xml_element, root)
+        self.output_ports = self._populateOutputPorts(self.ports)
+        self.input_ports = self._populateInputPorts(self.ports)
 
-        # hierarchical path relative to parent
-        # self.rel_hier_path = parent_obj.xml_element.get('name') + "." + xml_element.get('name')
+    def _createModuleDef(self, xml_element, xml_modules, root):
+        """
+        Returns:
+
+        ModuleDef object which represents the definition for this instance
+
+        Parameters:
+
+        xml_element :   # FIXME: elaborate
         
-        self.ports = self.getInstancePorts(xml_element)
+        xml_modules : list of xml.etree.ElementTree.Elements objects for all submodules
 
-    def getInstancePorts(self, xml_element):
+        root        : object of Type ModuleDef, represents the root module in the design
+        """
+
+        out = None
+
+        for xml_module in xml_modules:
+
+            if(xml_module.get("name") == xml_element.get("defName")):
+                out = ModuleDef(xml_module, xml_modules, self, root)
+                break
+        
+        if(out == None):
+            raise Exception(f"Module instance '{xml_element.get('name')}' with" \
+                            +f" defName '{xml_element.get('defName')}' has no definition")
+
+        return out
+
+    def _populateInstancePorts(self, xml_element, root):
         """
         Return 
 
@@ -266,89 +350,98 @@ class ModuleInstance():
 
         xml_element : an xml.etree.ElementTree.Element object. This object is...
                       ...the instance to be searched for ports
+
+        root        :   object of Type ModuleDef, represents the root module in the design
         """
 
         out = []
 
         for port in xml_element.iter("port"):
-            out.append(InstancePort(port, self))
+            out.append(InstancePort(port, self, root))
         
         return out
-    
-    def getInputPorts(self) -> list:
+
+    def _populateOutputPorts(self, ports) -> list:
         """
         Returns 
 
         A list of InstancePort objects
+
+        Parameters:
+
+        ports   :   list of InstancePort Objects
         """
 
         out = []
 
-        for port in self.ports:
-            if(port.xml_element.get('direction') == "in"):
-                out.append(port)
-
-        return out
-    
-    def getOutputPorts(self) -> list:
-        """
-        Returns 
-
-        A list of InstancePort objects
-        """
-
-        out = []
-
-        for port in self.ports:
+        for port in ports:
             if(port.xml_element.get('direction') == "out"):
                 out.append(port)
 
         return out
-    
-    def linkModule(self, module_obj):
+
+    def _populateInputPorts(self, ports) -> list:
         """
-        Responsibility:
+        Returns 
 
-        Set the 'self.module_obj' attribute with the given parameter
-        
-        Parameter:
+        A list of InstancePort objects
 
-        module_obj : Module Object, this is the module that defines this instance (not instantiates it).
+        Parameters:
+
+        ports   :   list of InstancePort Objects
         """
 
-        if(self.xml_element.get('defName') == module_obj.xml_element.get('name')):
-            self.module_obj = copy.deepcopy(module_obj)
-            self.module_obj.parent_obj = self
-        else:
-            raise Exception(f"Cannot linkModule: module_obj with name '{module_obj.xml_element.get('name')}' doesn't " + \
-                            f"match this instance's defName '{self.xml_element.get('defName')}'.")
-        
+        out = []
+
+        for port in ports:
+            if(port.xml_element.get('direction') == "in"):
+                out.append(port)
+
+        return out
+
     def getHierPath(self) -> str:
         """
         Returns:
 
-        Hierarchical path of this instnace from the root (or top) module
+        A string denoting the hierarchical path to this entity in rtl
         """
 
-        return self.parent_obj.getHierPath() + "." + self.xml_element.get('name')
+        out = ""
 
-    def findVarLoads(self, var_name: str):
+        if(self.parent_obj is None):
+            Exception(f"ModuleInstance '{self.xml_element.get('name')}' has no parent."\
+                        +f" XML element attributes: {self.xml_element.items()}")
+        else:
+            out = self.parent_obj.getHierPath() + "." + self.xml_element.get('name')
+
+        return out
+
+    def findOutputLoads(self, port_name: str) -> list:
         """
-        Returns 
+        Return
+
+        List of Objects which includes:
+            - Var
+
+        Parameters:
+
+        port_name   :   string, name of the output port whose ...
+                        ...external loads should be found.
+        """
+
+        out = []
+
+        output_ports_names = [ output_port.xml_element.get('name') for output_port in self.output_ports ]
+
+        # check if port_name is actually an output port
+        if(port_name in output_ports_names):
+            # get connections to the output port
+            # Note: returns empty list, list of Vars, or const (since this is an output port, const not expected)
+            out = self.parent_obj.getInstancePortConnections(self.xml_element.get('name'), port_name)
+        else:
+            raise Exception(f"{port_name} is not an output port. Valid output ports include: {output_ports_names}")
         
-        List of objects which are loads of 'var_name'
-            Note:
-            - Objects may be:
-                - port
-                - var
-        
-        Parameters 
-
-        var_name : string, Name of the variable whose loads should be found. 
-                    The variable must be a child of the module (i.e. self)
-        """
-
-        return self.module_obj.findVarLoads(var_name)
+        return out
     
     def findVarDrivers(self, var_name: str):
         """
@@ -367,37 +460,57 @@ class ModuleInstance():
                     The variable must be a child of the module (i.e. self)
         """
 
-        return self.module_obj.findVarDrivers(var_name)
-
-
-class Module():
-    """
-    Represents verilog module
-    """
-
-    def __init__(self, xml_element):
+        return self.module_def.findVarDrivers(var_name)
+    
+    def findVarLoads(self, var_name: str):
         """
-        Parameters:
+        Returns 
+        
+        List of objects which are loads of 'var_name'
+            Note:
+            - Objects may be:
+                - port
+                - var
+        
+        Parameters 
 
-        xml_element : an xml.etree.ElementTree.Element object. This object is...
-                      ...the xml node that defines the Instance
+        var_name : string, Name of the variable whose loads should be found. 
+                    The variable must be a child of the module (i.e. self)
         """
-        # store xml data
+
+        return self.module_def.findVarLoads(var_name)
+
+class ModuleDef():
+    """
+    Represent a module definition
+    """
+
+    def __init__(self, xml_element, xml_modules, parent_obj=None, root=None):
+        """
+        Params:
+
+        xml_modules : list of xml.etree.ElementTree.Elements objects for all submodules
+        """
+        
         self.xml_element = xml_element
+        self.parent_obj = parent_obj
+        self.root = root
 
-        # get vars 
-        self.vars = self.getVars(xml_element)
+        if(parent_obj is None):
+            self.instances = self._populateInstances(xml_element, xml_modules, self)
+            self.vars = self._populateVars(xml_element, self)
+        else:
+            self.instances = self._populateInstances(xml_element, xml_modules, root)
+            self.vars = self._populateVars(xml_element, root)
 
-        # get instances
-        self.instances = self.getInstances(xml_element)
-
-        # If not none, then module object is an instnace within another module
-        self.parent_obj = None
-
-        self.assigns = self.getAssigns(xml_element)
+        assert(len(self.vars) > 0 and f"Number of Variables in '{xml_element.get('name')}' is zero")
 
 
-    def getAssigns(self, xml_element):
+        self.input_vars = self._populateInputVars(self.vars)
+        self.output_vars = self._populateOutputVars(self.vars)
+        self.assigns = self._populateAssigns(xml_element, root)
+
+    def _populateAssigns(self, xml_element, root):
         """
         Returns
 
@@ -412,50 +525,179 @@ class Module():
                         - assigndly
                         - contassign
         """
+
         out = []
 
         # get all *assign* tags in the module (analogous to assignments in an RTL Module)
         # FIXME: Create a defines package/module to encapsulate all the types of assignments
         for assign_type in ["contassign", "assign", "assigndly"]:
             for assign in xml_element.iter(assign_type):
-                out.append(Assign(assign, self))
+                out.append(Assign(assign, self, root))
 
         return out
 
-
-    def getVars(self, xml_element):
-        """
-        Returns
-        
-        List of Var objects
-
-        Parameters
-
-        xml_element : an xml.etree.ElementTree.Element object. This object is...
-                      ...the module to be searched for variables
-        """
-        out = []
-        for var in xml_element.findall("./var"):
-            out.append(Var(var, self))
-
-        return out 
-    
-    def getInstances(self, xml_element):
+    def _populateInputVars(self, vars):
         """
         Returns 
         
-        A list of Instance Objects 
+        List of var objects
 
         Parameters:
 
-        xml_element : an xml.etree.ElementTree.Element object. This object is...
-                      ...the module to be searched for instances of other modules
+        vars    :   list of Var objects, These objects must be immediate children...
+                    ...of this ModuleDef 
+        """
+        
+        out = []
+        for var in vars:
+            if(var.xml_element.get('dir') == "input"):
+                out.append(var)
+
+        return out
+    
+    def _populateOutputVars(self, vars):
+        """
+        Returns 
+        
+        List of var objects
+
+        Parameters:
+
+        vars    :   list of Var objects, These objects must be immediate children...
+                    ...of this ModuleDef 
+        """
+        
+        out = []
+        for var in vars:
+            if(var.xml_element.get('dir') == "output"):
+                out.append(var)
+
+        return out
+
+    def _populateInstances(self, xml_element, xml_modules, root) -> list:
+        """
+        Returns: 
+
+        List of ModuleInstances
+
+        Parameters:
+
+        xml_element : object of type 'xml.etree.ElementTree.Element', This Element contains xml data that...
+                      ...defines this module
+
+        xml_modules : list of xml.etree.ElementTree.Elements objects for all submodules
+
+        root        : object of Type ModuleDef, represents the root module in the design
         """
 
         out = []
 
-        for instance in xml_element.iter("instance"):
-            out.append(ModuleInstance(instance, self))
+        for xml_instance in xml_element.iter("instance"):
+            # FIXME: consider multithreading
+            out.append(ModuleInstance(xml_instance, xml_modules, self, root))
+
+        return out
+
+    def _populateVars(self, xml_element, root) -> list:
+        """
+        Returns:
+
+        List of Vars
+
+        Parameters:
+
+        xml_element : object of type 'xml.etree.ElementTree.Element', This Element contains xml data that...
+                      ...defines this module
+
+        root        : object of Type ModuleDef, represents the root module in the design
+        """
+
+        out = []
+
+        for var in xml_element.iter("var"):
+            out.append(Var(var, self, root))
+
+        return out
+
+    def getHierPath(self) -> str:
+        """
+        Returns:
+
+        A string denoting the hierarchical path to this entity in rtl
+        """
+
+        out = ""
+
+        if(self.parent_obj is None):
+            out = self.xml_element.get('name')
+        else:
+            out = self.parent_obj.getHierPath()
+
+        return out
+
+    def findVar(self, hier_path: str) -> Var:
+        """
+        Returns:
+
+        Var object at the given hierarchical path. None if var object not found.
+
+        Parameters:
+
+        hier_path   :   string, hierarchical path to a target variable. Hierarchies are...
+                        ...separated by periods "." and are relative to this module.
+                        The first character in this parameter should be a period ".".
+
+                        Eg (searching from current module):
+                            fileVar(self, ".rel_lvl1_module.rel_lvl2_module.var_name")
+        """
+
+        out = None
+
+        # enforce hier_path begining with period
+        if(hier_path[0] != '.'):
+            raise Exception(f"hier_path '{hier_path}' doesn't begin with a period "+"\".\"")
+
+        
+        path_stages = hier_path[1:].split('.', 1)
+
+        # if path contains only var name
+        if(len(path_stages) == 1):
+            for var in self.vars:
+                if(path_stages[-1] == var.xml_element.get('name')):
+                    out = var
+        else:
+            # find instance whose name matches first path
+            for instance in self.instances:
+                if(path_stages[0] == instance.xml_element.get('name')):
+                    out = instance.module_def.findVar("."+".".join(path_stages[1:]))
+            
+        return out
+
+    def getAllVars(self):
+        """
+        Retunrs:
+
+        A list of Var objects
+        """
+
+        out = self.vars
+
+        for instance in self.instances:
+            out = out + instance.module_def.getAllVars()
+
+        return out
+
+    def getAllInstances(self):
+        """
+        Retunrs:
+
+        A list of ModuleInstance objects
+        """
+
+        out = self.instances
+
+        for instance in self.instances:
+            out = out + instance.module_def.getAllInstances()
 
         return out
     
@@ -472,15 +714,16 @@ class Module():
 
         Parameters: 
 
-        var_name : string, Name of the variable whose drivers should be found. 
-                    The variable must be a child of the module (i.e. self)
+        var_name    :   string, Name of the variable whose drivers should be found. 
+                        The variable must be a child of the module (i.e. self)
         """
 
+        CONST_INDICATOR = "&apos"
         drivers = []
 
         # check instance ports
         for instance in self.instances:
-            for output_instance_port in instance.getOutputPorts():
+            for output_instance_port in instance.output_ports:
                 if(var_name in output_instance_port.connections):
                     drivers.append(output_instance_port)
     
@@ -488,23 +731,28 @@ class Module():
         for assign in self.assigns:
 
             # get the loads and drivers in this *assign* node 
-            assign_loads = assign.loads
-            assign_drivers = assign.drivers
+            assign_loads_xml = assign.loads_xml
+            assign_drivers_xml = assign.drivers_xml
 
             assign_contains_drivers = False
             # check if var_name is a load in this assign node
-            for assign_load in assign_loads:
+            for assign_load_xml in assign_loads_xml:
                 
-                if(assign_load.get('name') == var_name):
+                if(assign_load_xml.get('name') == var_name):
                     assign_contains_drivers = True
                     break
             
             if(assign_contains_drivers):
                 # append all drivers in this assign
-                for assign_driver in assign_drivers:
-                    drivers.append(
-                        self.getVarFromName(assign_driver.get('name'))
-                    )
+                for assign_driver_xml in assign_drivers_xml:
+                    
+                    # if driver is const
+                    if(CONST_INDICATOR in assign_driver_xml.get('name')):
+                        drivers.append(Const(assign_driver_xml, self, self.root))
+                    else:
+                        drivers.append(
+                            self.findVar("."+assign_driver_xml.get('name'))
+                        )
 
         return drivers
 
@@ -528,7 +776,7 @@ class Module():
 
         # check instance ports
         for instance in self.instances:
-            for input_instance_port in instance.getInputPorts():
+            for input_instance_port in instance.input_ports:
                 if(var_name in input_instance_port.connections):
                     loads.append(input_instance_port)
 
@@ -536,108 +784,72 @@ class Module():
         for assign in self.assigns:
 
             # get the loads and drivers in this *assign* node 
-            assign_loads = assign.loads
-            assign_drivers = assign.drivers
+            assign_loads_xml = assign.loads_xml
+            assign_drivers_xml = assign.drivers_xml
 
             assign_contains_loads = False
             # check if var_name is a driver in this assign node
-            for assign_driver in assign_drivers:
-                
-                if(assign_driver.get('name') == var_name):
+            for assign_driver_xml in assign_drivers_xml:
+                if(assign_driver_xml.get('name') == var_name):
+                    
                     assign_contains_loads = True
                     break
             
             if(assign_contains_loads):
                 # append all loads in this assign
-                for assign_load in assign_loads:
+                for assign_load_xml in assign_loads_xml:
                     loads.append(
-                        self.getVarFromName(assign_load.get('name'))
+                        self.findVar("."+assign_load_xml.get('name'))
                     )
 
+        # find external loads if var is an output port and module is an instance
+        if(
+                (self.parent_obj is not None )
+            and (self.findVar("."+var_name).xml_element.get('dir') == "output") 
+        ):
+            loads.extend(self.parent_obj.findOutputLoads(var_name))
+
+        
         return loads
 
-
-    def getInputPorts(self):
-        """
-        Returns 
-        
-        List of var objects 
-        """
-        
-        out = []
-        for var in self.vars:
-            if(var.xml_element.get('dir') == "input"):
-                out.append(var)
-
-        return out
-    
-    def getOutputPorts(self):
-        """
-        Returns 
-        
-        List of var objects 
-        """
-        
-        out = []
-        for var in self.vars:
-            if(var.xml_element.get('dir') == "output"):
-                out.append(var)
-
-        return out
-    
-    def getVarFromName(self, name_str: str) -> Var:
-        """
-        Returns 
-
-        A 'Var' Object whose name matches 'name_str'
-
-        Parameters
-
-        name_str : string, name of the var for find. 
-        """
-        out_var = None
-        
-        for var in self.vars:
-            if(var.xml_element.get('name') == name_str):
-                out_var = var
-
-        return out_var
-    
-    def linkInstancesToModules(self, modules) -> None:
-        """
-        Responsibility
-
-        Links intstances in this module to their respective module objects
-
-        Parameters:
-
-        modules : list of Module objects
-        """
-
-        module_names = [ module.xml_element.get('name') for module in modules ]
-
-        for instance in self.instances:
-            if(instance.xml_element.get('defName') in module_names):
-                # get module with that defines instance
-                matching_module = modules[module_names.index(
-                                            instance.xml_element.get('defName')
-                                        )]
-
-                instance.linkModule(matching_module)
-
-    def getHierPath(self) -> str:
+    def getInstancePortConnections(self, instance_name: str, port_name: str) -> list:
         """
         Returns:
 
-        Hierarchical path of this instnace from the root (or top) module
+        List of Vars Objects or consts Objects. These objects represent...
+        ...variables or constants connected to ports of instances (or subblocks)...
+        ...within this module 
+
+        Parameters:
+
+        instance_name   :   string, name of instance whose port will be searched for connections
+
+        port_name   :   string, name of port on the instance to search for connections
         """
-        out = ""
-        if(self.parent_obj is None):
-            out = self.xml_element.get('name')
-        else:
-            out = self.parent_obj.getHierPath()
+
+        out = []
+
+        instnace_obj = None
+
+        # find instance
+        for instance in self.instances:
+            if(instance.xml_element.get('name') == instance_name):
+                instnace_obj = instance
+                break
+        
+        # find port & names of its connections
+        port_connection_names = []
+        for port in instnace_obj.ports:
+            if(port.xml_element.get('name') == port_name):
+                port_connection_names = port.connections.keys()
+                break
+        
+        # convert connection names to variable names
+        for port_connection_name in port_connection_names:
+            out.append(self.findVar("."+port_connection_name))
         
         return out
+
 
 ######## MAIN ##########
 
@@ -648,81 +860,94 @@ parser.add_argument("xml_file", help="XML file to be parsed")
 args = parser.parse_args()
 
 # creating XML tree
-tree = ET.parse(args.xml_file)
+design_xml_tree = ET.parse(args.xml_file)
 
-netlist_node = tree.find("netlist")
+# get top module
+xml_top_module = None
+xml_submodules = []
 
-modules = []
+for module in design_xml_tree.findall("./netlist/module"):
+    if(module.get('topModule') == "1"):
 
-for node in netlist_node:
-    if(node.tag == "module"):
-        modules.append(Module(node))
-        print("Module detected")
-    elif(node.tag == "typetable"):
-        # create typetable
-        print("TypeTable detected")
+        if(xml_top_module is not None):
+            raise Exception(f"There appear to be multiple topModules." \
+            + f" '{xml_top_module.get('name')}' appears to be the second")
+        else:
+            xml_top_module = module
 
-# link all instances in each module with their module definition
-for module in modules:
-    module.linkInstancesToModules(modules)
+    else:
+        xml_submodules.append(module)
+
+top_module = ModuleDef(xml_top_module, xml_submodules, None)
+
+print("Top Module name:", top_module.xml_element.get('name'))
+# print("Top Module Instances:")
+# for instance in top_module.instances:
+#     print("\tInstance Attrs:",instance.xml_element.items())
 
 
+test_var = top_module.instances[5].module_def.instances[2].module_def.instances[0].module_def.vars[0]
+print(test_var.getHierPath())
+# test_find_var_out = top_module.findVar("."+".".join(test_var.getHierPath().split('.')[1:]))
+test_find_var_out = top_module.findVar(".i_addr")
+print(test_find_var_out.xml_element.get('name'))
 
-print("=============")
-print("Num of top module output ports:", len(modules[0].getOutputPorts()))
-# print(modules[0].findVarLoads(modules[0].vars[0])[0].parent_obj.parent_obj.xml_element.get('name'))
-# print(modules[0].findVarLoads(modules[0].vars[0])[0].parent_obj.xml_element.get('name'))
-print("Name of first load variable for first input port:", modules[0].findVarLoads(modules[0].vars[0].xml_element.get('name'))[0].xml_element.get('name'))
-print("=============")
+all_vars = top_module.getAllVars()
 
-top_module = None 
-for module in modules:
-    if(module.xml_element.get('topModule') == "1"):
-        top_module = module
-        break
-del modules
+print("Num of vars:", len(all_vars))
 
-find_load_str = "tc_cache_hit"
+# for var in all_vars:
+#     print(var.getHierPath())
 
+print()
+
+all_instances = top_module.getAllInstances()
+
+print("Num of Instances:", len(all_instances))
+
+# for instance in all_instances:
+#     print(instance.getHierPath())
+
+print()
+
+find_load_str = ".i_mem_data"
 print("Printing Loads for", find_load_str)
-for load in top_module.findVarLoads(find_load_str):
-    print("\tLoad tag: ", load.xml_element.tag)
-    print("\tLoad Attibutes:", load.xml_element.items())
-    print("\tLoad Parent tag:", load.parent_obj.xml_element.tag)
-    print("\tLoad Parent Attibutes", load.parent_obj.xml_element.items())
-    print("\t"+load.getHierPath())
+for load in top_module.findVar(find_load_str).findVarLoads():
+    print(" Load tag: ", load.xml_element.tag)
+    print(" Load Attibutes:", load.xml_element.items())
+    print(" Load Parent tag:", load.parent_obj.xml_element.tag)
+    print(" Load Parent Attibutes", load.parent_obj.xml_element.items())
+    print(" "+load.getHierPath())
 
-    if(load.xml_element.tag == "port"):
-        loads_loads = load.findVarLoads()
-        for loads_load in loads_loads:
-            print("\t\tLoad's load tag: ", loads_load.xml_element.tag)
-            print("\t\tLoad's load Attibutes:", loads_load.xml_element.items())
-            print("\t\tLoad's load Parent tag:", loads_load.parent_obj.xml_element.tag)
-            print("\t\tLoad's load Parent Attibutes", loads_load.parent_obj.xml_element.items())
-            print("\t\t"+loads_load.getHierPath())
+    count = 2
+    while(not((load.parent_obj.parent_obj is None) and (load.xml_element.get('dir') == "output"))):
+        load = load.findVarLoads()[0]
+        print(("  "*count)+"Load tag: ", load.xml_element.tag)
+        print(("  "*count)+"Load Attibutes:", load.xml_element.items())
+        print(("  "*count)+"Load Parent tag:", load.parent_obj.xml_element.tag)
+        print(("  "*count)+"Load Parent Attibutes", load.parent_obj.xml_element.items())
+        print(("  "*count)+load.getHierPath())
 
-    print()
+        count += 1
+        # if(count >= 20):
+        #     break
 
-print("=============")
+    # count = 2
+    # while(load.xml_element.tag == "var"):
+    #     load = load.findVarLoads()[0]
+    #     print(("\t"*count)+"Load tag: ", load.xml_element.tag)
+    #     print(("\t"*count)+"Load Attibutes:", load.xml_element.items())
+    #     print(("\t"*count)+"Load Parent tag:", load.parent_obj.xml_element.tag)
+    #     print(("\t"*count)+"Load Parent Attibutes", load.parent_obj.xml_element.items())
+    #     print(("\t"*count)+load.getHierPath())
 
-find_driver_str = "o_valid"
-for driver in top_module.findVarDrivers(find_driver_str):
-    print("\tDriver tag: ", driver.xml_element.tag)
-    print("\tDriver Attibutes:", driver.xml_element.items())
-    print("\tDriver Parent tag:", driver.parent_obj.xml_element.tag)
-    print("\tDriver Parent Attibutes", driver.parent_obj.xml_element.items())
-    print("\t"+driver.getHierPath())
-    print()
+    #     count += 1
 
-    if(driver.xml_element.tag == "port"):
-        driver_drivers = driver.findVarDrivers()
-        for driver_driver in driver_drivers:
-            print("\t\tDriver's driver tag: ", driver_driver.xml_element.tag)
-            print("\t\tDriver's driver Attibutes:", driver_driver.xml_element.items())
-            print("\t\tDriver's driver Parent tag:", driver_driver.parent_obj.xml_element.tag)
-            print("\t\tDriver's driver Parent Attibutes", driver_driver.parent_obj.xml_element.items())
-            print("\t\t"+driver_driver.getHierPath())
-            print()
 
-# with open("out.xml", "wb") as f:
-#     f.write(ET.tostring(top_module.xml_element))
+# print(top_module.findVar(find_load_str).xml_element.get('name'))
+# print()
+# print("Top Module Vars:")
+# for var in top_module.vars:
+#     print("\tVar Attrs:",var.xml_element.items())
+# get top module's ports
+# get top module's instances 
