@@ -6,9 +6,36 @@ import xml.etree.ElementTree as ET
 # FIXME: Figure out a way to report connections to InstancePort that are constant
 # FIXME: Finish adding Module Instance's findInputDrivers feature
 
-class Const():
+class ConstLiteral():
     """
-    Represtents a constant value typically used to drive vars
+    Represents:
+
+    Contant value used to tieoff ports
+    """
+
+    def __init__(self, xml_element, parent_obj, root):
+        """
+        Parameters:
+
+        xml_element : an xml.etree.ElementTree.Element object. This object is...
+                      ...the xml node that defines the constant
+
+        parent_obj  : a reference to the ModuleInstance where this constant is used. 
+                      This object contains an xml element that is the ancestor of 'xml_element'
+
+        root        : object of Type ModuleDef, represents the root module in the design
+        """
+
+        self.xml_element = xml_element
+        self.parent_obj = parent_obj
+        self.root = root
+
+class ConstVar():
+    """
+    Represtents 
+    
+    A constant value typically used to drive vars.
+    This type of Const Var is found in assignments
     """
 
     def __init__(self, xml_element, parent_obj, root) -> None:
@@ -200,6 +227,8 @@ class InstancePort():
     Represents ports on module instances
     """
 
+    _CONNECTION_TYPES = ["varref", "const"]
+
     def __init__(self, xml_element, parent_obj, root):
         """
         Parameters:
@@ -234,9 +263,10 @@ class InstancePort():
         """
         
         out_dict = dict()
-
-        for varref in xml_element.iter("varref"):
-            out_dict[varref.get('name')] = varref
+        
+        for connection_type in InstancePort._CONNECTION_TYPES:
+            for varref_xml in xml_element.iter(connection_type):
+                out_dict[varref_xml.get('name')] = varref_xml
 
         return out_dict
     
@@ -310,6 +340,8 @@ class ModuleInstance():
         self.ports = self._populateInstancePorts(xml_element, root)
         self.output_ports = self._populateOutputPorts(self.ports)
         self.input_ports = self._populateInputPorts(self.ports)
+        self.output_ports_dict = self._populateOutputPortDict(self.output_ports)
+        self.input_ports_dict = self._populateInputPortDict(self.input_ports)
 
     def _createModuleDef(self, xml_element, xml_modules, root):
         """
@@ -399,22 +431,36 @@ class ModuleInstance():
 
         return out
 
-    def getHierPath(self) -> str:
+    def _populateOutputPortDict(self, output_ports_objs: list) -> dict:
         """
-        Returns:
+        Return 
+        A dictionary:
+            - keys   : string, output port names
+            - values : InstnacePortObjects
 
-        A string denoting the hierarchical path to this entity in rtl
+        Parameters:
+
+        output_ports_objs   :   list of InstancePort objects. These objects...
+                                ...are the output ports belonging to this InstanceModule
         """
 
-        out = ""
+        return { output_port_obj.xml_element.get('name') : output_port_obj for output_port_obj in output_ports_objs }
+    
+    def _populateInputPortDict(self, input_ports_objs: list) -> dict:
+        """
+        Return 
 
-        if(self.parent_obj is None):
-            Exception(f"ModuleInstance '{self.xml_element.get('name')}' has no parent."\
-                        +f" XML element attributes: {self.xml_element.items()}")
-        else:
-            out = self.parent_obj.getHierPath() + "." + self.xml_element.get('name')
+        A dictionary:
+            - keys   : string, output port names
+            - values : InstnacePortObjects
 
-        return out
+        Parameters:
+
+        input_ports_objs   :    list of InstancePort objects. These objects...
+                                ...are the input ports belonging to this InstanceModule
+        """
+
+        return { input_port_obj.xml_element.get('name') : input_port_obj for input_port_obj in input_ports_objs }
 
     def findOutputLoads(self, port_name: str) -> list:
         """
@@ -429,20 +475,65 @@ class ModuleInstance():
                         ...external loads should be found.
         """
 
+        # check if port_name is actually an output port
+        if(port_name not in self.output_ports_dict):
+            raise Exception(f"{port_name} is not an output port. Valid output ports include: "\
+                            +f"{', '.join(self.output_ports_dict.keys())}")
+
         out = []
 
-        output_ports_names = [ output_port.xml_element.get('name') for output_port in self.output_ports ]
+        # find port & names of its connections
+        port_connection_names = self.output_ports_dict[port_name].connections.keys()
+        
+        # convert connection names to variable objects
+        for port_connection_name in port_connection_names:
+            var_obj = self.parent_obj.findVar("."+port_connection_name)
 
-        # check if port_name is actually an output port
-        if(port_name in output_ports_names):
-            # get connections to the output port
-            # Note: returns empty list, list of Vars, or const (since this is an output port, const not expected)
-            out = self.parent_obj.getInstancePortConnections(self.xml_element.get('name'), port_name)
-        else:
-            raise Exception(f"{port_name} is not an output port. Valid output ports include: {output_ports_names}")
+            # check that only vars are connected to the output port
+            if(var_obj.xml_element.tag != "var"):
+                raise Exception(f"'{port_name}' is connected to an entity that isn't a var. That entity's"\
+                                +f"properties includes '{var_obj.items()}'")
+
+            out.append(var_obj)
         
         return out
     
+    def findInputDrivers(self, port_name: str) -> list:
+        """
+        Return
+
+        List of Objects which includes:
+            - Var
+            - Const
+
+        Parameters:
+
+        port_name   :   string, name of the input port whose ...
+                        ...external drivers should be found.
+        """
+
+        # check if port_name is actually an input port
+        if(port_name not in self.input_ports_dict):
+            raise Exception(f"{port_name} is not an input port. Valid input ports include: "\
+                            +f"{', '.join(self.input_ports_dict.keys())}")
+
+        out = []
+
+        # find port & names of its connections
+        port_connection_names = self.input_ports_dict[port_name].connections.keys()
+        
+        # convert connection names to variable objects
+        for port_connection_name in port_connection_names:
+            var_obj = self.parent_obj.findVar("."+port_connection_name)
+
+            if(var_obj == None and ModuleDef.nameContainsConstIndicators(port_connection_name)):
+                const_xml_element = self.input_ports_dict[port_name].connections[port_connection_name]
+                out.append(ConstLiteral(const_xml_element, self, self.root))
+            else:
+                out.append(var_obj)
+        
+        return out
+
     def findVarDrivers(self, var_name: str):
         """
         Returns 
@@ -479,11 +570,32 @@ class ModuleInstance():
         """
 
         return self.module_def.findVarLoads(var_name)
+    
+    def getHierPath(self) -> str:
+        """
+        Returns:
+
+        A string denoting the hierarchical path to this entity in rtl
+        """
+
+        out = ""
+
+        if(self.parent_obj is None):
+            Exception(f"ModuleInstance '{self.xml_element.get('name')}' has no parent."\
+                        +f" XML element attributes: {self.xml_element.items()}")
+        else:
+            out = self.parent_obj.getHierPath() + "." + self.xml_element.get('name')
+
+        return out
+
 
 class ModuleDef():
     """
     Represent a module definition
     """
+
+    __CONST_INDICATOR_1 = "&apos"
+    __CONST_INDICATOR_2 = "'"
 
     def __init__(self, xml_element, xml_modules, parent_obj=None, root=None):
         """
@@ -718,41 +830,47 @@ class ModuleDef():
                         The variable must be a child of the module (i.e. self)
         """
 
-        CONST_INDICATOR = "&apos"
         drivers = []
 
-        # check instance ports
-        for instance in self.instances:
-            for output_instance_port in instance.output_ports:
-                if(var_name in output_instance_port.connections):
-                    drivers.append(output_instance_port)
-    
-        # check all the *assign* nodes (or statement)
-        for assign in self.assigns:
+        # only check instance ports and assigns when var is not an input...
+        # ...inputs can't be driven internally
+        if(self.findVar("."+var_name).xml_element.get('dir') != "input"):
 
-            # get the loads and drivers in this *assign* node 
-            assign_loads_xml = assign.loads_xml
-            assign_drivers_xml = assign.drivers_xml
+            # check instance ports
+            for instance in self.instances:
+                for output_instance_port in instance.output_ports:
+                    if(var_name in output_instance_port.connections):
+                        drivers.append(output_instance_port)
+        
+            # check all the *assign* nodes (or statement)
+            for assign in self.assigns:
 
-            assign_contains_drivers = False
-            # check if var_name is a load in this assign node
-            for assign_load_xml in assign_loads_xml:
-                
-                if(assign_load_xml.get('name') == var_name):
-                    assign_contains_drivers = True
-                    break
-            
-            if(assign_contains_drivers):
-                # append all drivers in this assign
-                for assign_driver_xml in assign_drivers_xml:
+                # get the loads and drivers in this *assign* node 
+                assign_loads_xml = assign.loads_xml
+                assign_drivers_xml = assign.drivers_xml
+
+                assign_contains_drivers = False
+                # check if var_name is a load in this assign node
+                for assign_load_xml in assign_loads_xml:
                     
-                    # if driver is const
-                    if(CONST_INDICATOR in assign_driver_xml.get('name')):
-                        drivers.append(Const(assign_driver_xml, self, self.root))
-                    else:
-                        drivers.append(
-                            self.findVar("."+assign_driver_xml.get('name'))
-                        )
+                    if(assign_load_xml.get('name') == var_name):
+                        assign_contains_drivers = True
+                        break
+                
+                if(assign_contains_drivers):
+                    # append all drivers in this assign
+                    for assign_driver_xml in assign_drivers_xml:
+                        
+                        if(ModuleDef.nameContainsConstIndicators(assign_driver_xml.get('name'))):
+                            drivers.append(ConstVar(assign_driver_xml, self, self.root))
+                        else:
+                            drivers.append(
+                                self.findVar("."+assign_driver_xml.get('name'))
+                            )
+
+        # find external loads if var is an output port and module is an instance
+        elif(self.parent_obj is not None):
+            drivers.extend(self.parent_obj.findInputDrivers(var_name))
 
         return drivers
 
@@ -821,7 +939,7 @@ class ModuleDef():
         ...within this module 
 
         Parameters:
-
+        #FIXME: Use instance path instead
         instance_name   :   string, name of instance whose port will be searched for connections
 
         port_name   :   string, name of port on the instance to search for connections
@@ -850,6 +968,24 @@ class ModuleDef():
         
         return out
 
+    def nameContainsConstIndicators(name: str) -> bool:
+            """
+            Returns
+
+            True only if 'name' contains indications...
+            ...that is is a const
+
+            Parameters:
+
+            name    :   string, 'name' attribute of (xml) element 
+            """
+
+            out =   (
+                    ModuleDef.__CONST_INDICATOR_1 in name \
+                or  ModuleDef.__CONST_INDICATOR_2 in name
+            )
+            
+            return out
 
 ######## MAIN ##########
 
