@@ -2,9 +2,6 @@ import argparse
 import xml.etree.ElementTree as ET
 
 # FIXME: Should const and Instant Ports be vars (or inherit vars)?
-# FIXME: Figure out a way to find drivers that are const
-# FIXME: Figure out a way to report connections to InstancePort that are constant
-# FIXME: Finish adding Module Instance's findInputDrivers feature
 
 class ConstLiteral():
     """
