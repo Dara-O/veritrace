@@ -27,31 +27,6 @@ class ConstLiteral():
         self.parent_obj = parent_obj
         self.root = root
 
-class ConstVar():
-    """
-    Represtents 
-    
-    A constant value typically used to drive vars.
-    This type of Const Var is found in assignments
-    """
-
-    def __init__(self, xml_element, parent_obj, root) -> None:
-        """
-        Parameters:
-
-        xml_element : an xml.etree.ElementTree.Element object. This object is...
-                      ...the xml node that defines the constant
-
-        parent_obj  : a reference to the object where this constant is defined. 
-                      This object contains an xml element that is the ancestor of 'xml_element'
-
-        root        : object of Type ModuleDef, represents the root module in the design
-        """
-
-        self.xml_element = xml_element
-        self.parent_obj = parent_obj
-        self.root = root
-
 class Var():
     """
     Represents a Var. This may be:
@@ -109,6 +84,30 @@ class Var():
         """
 
         return self.parent_obj.findVarDrivers(self.xml_element.get('name'))
+
+
+class ConstVar(Var):
+    """
+    Represtents 
+    
+    A constant value typically used to drive vars.
+    This type of Const Var is found in assignments
+    """
+
+    def __init__(self, xml_element, parent_obj, root) -> None:
+        """
+        Parameters:
+
+        xml_element : an xml.etree.ElementTree.Element object. This object is...
+                      ...the xml node that defines the constant
+
+        parent_obj  : a reference to the object where this constant is defined. 
+                      This object contains an xml element that is the ancestor of 'xml_element'
+
+        root        : object of Type ModuleDef, represents the root module in the design
+        """
+
+        super().__init__(xml_element, parent_obj, root)
 
 
 class Assign():
@@ -501,7 +500,8 @@ class ModuleInstance():
 
         List of Objects which includes:
             - Var
-            - Const
+            - ConstVar
+            - ConstLiteral
 
         Parameters:
 
@@ -645,7 +645,7 @@ class ModuleDef():
 
         return out
 
-    def _populateInputVars(self, vars):
+    def _populateInputVars(self, vars: list[Var]) -> list[Var]:
         """
         Returns 
         
@@ -664,7 +664,7 @@ class ModuleDef():
 
         return out
     
-    def _populateOutputVars(self, vars):
+    def _populateOutputVars(self, vars: list[Var]) -> list[Var]:
         """
         Returns 
         
@@ -1044,43 +1044,34 @@ print("Num of Instances:", len(all_instances))
 print()
 
 find_load_str = ".i_mem_data"
-print("Printing Loads for", find_load_str)
-for load in top_module.findVar(find_load_str).findVarLoads():
-    print(" Load tag: ", load.xml_element.tag)
-    print(" Load Attibutes:", load.xml_element.items())
-    print(" Load Parent tag:", load.parent_obj.xml_element.tag)
-    print(" Load Parent Attibutes", load.parent_obj.xml_element.items())
-    print(" "+load.getHierPath())
+# print("Printing Loads for", find_load_str)
+# for load in top_module.findVar(find_load_str).findVarLoads():
+#     print(" Load tag: ", load.xml_element.tag)
+#     print(" Load Attibutes:", load.xml_element.items())
+#     print(" Load Parent tag:", load.parent_obj.xml_element.tag)
+#     print(" Load Parent Attibutes", load.parent_obj.xml_element.items())
+#     print(" "+load.getHierPath())
 
-    count = 2
-    while(not((load.parent_obj.parent_obj is None) and (load.xml_element.get('dir') == "output"))):
-        load = load.findVarLoads()[0]
-        print(("  "*count)+"Load tag: ", load.xml_element.tag)
-        print(("  "*count)+"Load Attibutes:", load.xml_element.items())
-        print(("  "*count)+"Load Parent tag:", load.parent_obj.xml_element.tag)
-        print(("  "*count)+"Load Parent Attibutes", load.parent_obj.xml_element.items())
-        print(("  "*count)+load.getHierPath())
+#     count = 2
+#     while(not((load.parent_obj.parent_obj is None) and (load.xml_element.get('dir') == "output"))):
+#         load = load.findVarLoads()[0]
+#         print(("  "*count)+"Load tag: ", load.xml_element.tag)
+#         print(("  "*count)+"Load Attibutes:", load.xml_element.items())
+#         print(("  "*count)+"Load Parent tag:", load.parent_obj.xml_element.tag)
+#         print(("  "*count)+"Load Parent Attibutes", load.parent_obj.xml_element.items())
+#         print(("  "*count)+load.getHierPath())
 
-        count += 1
-        # if(count >= 20):
-        #     break
+#         count += 1
 
-    # count = 2
-    # while(load.xml_element.tag == "var"):
-    #     load = load.findVarLoads()[0]
-    #     print(("\t"*count)+"Load tag: ", load.xml_element.tag)
-    #     print(("\t"*count)+"Load Attibutes:", load.xml_element.items())
-    #     print(("\t"*count)+"Load Parent tag:", load.parent_obj.xml_element.tag)
-    #     print(("\t"*count)+"Load Parent Attibutes", load.parent_obj.xml_element.items())
-    #     print(("\t"*count)+load.getHierPath())
+# get top level ports
 
-    #     count += 1
-
-
-# print(top_module.findVar(find_load_str).xml_element.get('name'))
-# print()
-# print("Top Module Vars:")
-# for var in top_module.vars:
-#     print("\tVar Attrs:",var.xml_element.items())
-# get top module's ports
-# get top module's instances 
+print("Printing ports and their drivers")
+print(">>>>>>>>>>>>>")
+for var in top_module.vars:
+    for driver in var.findVarLoads():
+        
+        print("{: <30} -> {: <30} {: <20}".format(
+            var.xml_element.get('name'), 
+            driver.xml_element.get('name'), 
+            driver.getHierPath()))
+print("<<<<<<<<<<<<<")
