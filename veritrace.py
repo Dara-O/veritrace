@@ -1,7 +1,109 @@
 import argparse
 import xml.etree.ElementTree as ET
+import os
 
-# FIXME: Should const and Instant Ports be vars (or inherit vars)?
+FILE_PATH_PRE = ""
+
+def elaborateLocs(loc_str :str, files_xml_element: ET.Element) -> str:
+    """
+    Responsibility:
+
+    Replace file ids with actual file path
+
+    Returns:
+
+    String
+
+    Parameters:
+
+    loc_str :   str, string containing location, 'loc', for a given entity. 
+                Eg: "c,80,33,80,48"
+
+    files_xml_element   :   an xml.etree.ElementTree.Element object containing mapping between file ids and file paths.
+                            Gotten from the xml produced by Verilator
+
+    """
+
+    file_id = loc_str.split(",")[0]
+
+    file_xml_element = files_xml_element.find(f"file[@id='{file_id}']")
+    
+    out = loc_str.replace(file_id, file_xml_element.get('filename'))
+
+    return out
+
+def hexToDec(hex_str: str) -> str:
+    """
+    Returns
+
+    String, Decimal equivalent of hex number 
+
+    Parameters:
+
+    hex_str :   string, hex number written in verilog style. 
+                Eg:
+                32'sh0
+                32'hf
+                4'ha
+    """
+
+    hex_num = hex_str.split('h')[-1]
+    int_num = int(hex_num, 16)
+
+    return int_num
+
+
+def elaborateDtypeId(dtype_id: str, typetable_xml_element: ET.Element) -> dict:
+    """
+    Responsibility:
+
+    Replace file ids with actual file path
+
+    Returns:
+
+    Dict with keys "type", "dim" 
+
+    Parameters:
+
+    loc_str :   str, datatype id ('dtype_id') for a given entity. 
+                Id is typically a number
+                Eg: "2"
+
+    typetable_xml_element  :    an xml.etree.ElementTree.Element object containing...
+                                ...mapping between dtpye_ids and typtable ids.
+                                Gotten from the xml produced by Verilator
+
+    """
+
+    basicdtype_xml_element = typetable_xml_element.find(f"basicdtype[@id='{dtype_id}']")
+    unpackarraydtype_xml_element = typetable_xml_element.find(f"unpackarraydtype[@id='{dtype_id}']")
+    
+    type_str = ""
+    dim_str = ""
+    if(basicdtype_xml_element is not None):
+        type_str = basicdtype_xml_element.get('name')
+        dim_str = f"[{basicdtype_xml_element.get('left')}:{basicdtype_xml_element.get('right')}]"
+    elif(unpackarraydtype_xml_element is not None):
+        type_str = "array"
+
+        # get limits describing the number of rows
+        arr_range_limits = unpackarraydtype_xml_element.findall("./range/const")
+        left_array_limit = hexToDec(arr_range_limits[0].get('name').replace('&apos', "'"))
+        right_array_limit = hexToDec(arr_range_limits[1].get('name').replace('&apos', "'"))
+
+        # get limits describing the number of columns
+        sub_type_id = unpackarraydtype_xml_element.get('sub_dtype_id')
+        sub_type_xml_element = typetable_xml_element.find(f"basicdtype[@id='{sub_type_id}']")
+        left_col_limit = sub_type_xml_element.get('left')
+        right_col_limit = sub_type_xml_element.get('right')
+
+        dim_str = f"[{left_array_limit}:{right_array_limit}] [{left_col_limit}:{right_col_limit}]"
+        
+    dim_str = dim_str.replace("None", "0")
+    
+    out_dict = {"type" : type_str, "dim" : dim_str}
+    
+    return out_dict
 
 class ConstLiteral():
     """
@@ -85,7 +187,6 @@ class Var():
 
         return self.parent_obj.findVarDrivers(self.xml_element.get('name'))
 
-
 class ConstVar(Var):
     """
     Represtents 
@@ -108,7 +209,6 @@ class ConstVar(Var):
         """
 
         super().__init__(xml_element, parent_obj, root)
-
 
 class Assign():
     """
@@ -585,7 +685,6 @@ class ModuleInstance():
 
         return out
 
-
 class ModuleDef():
     """
     Represent a module definition
@@ -984,6 +1083,223 @@ class ModuleDef():
             
             return out
 
+def getParamValue(param_xml_element):
+    """
+    Retunrs string of value assinged to a param or localparam
+    """
+
+def _HTML_getVarName(var_name: str, 
+                     rowspan: str, 
+                     parent_xml_element: ET.Element,
+                     misc_text="") -> ET.Element:
+    """
+    Returns 
+    
+    xml.etree.ElementTree.Element, a <td> htm tag with the variable name
+
+    Parameter:
+
+    rowspan : string, Number grater than 0
+    """
+
+    td_xml_element = ET.SubElement(parent_xml_element, 'td')
+    td_xml_element.set('rowspan', str(rowspan))
+    td_xml_element.set('id', var_name)
+
+    p_xml_element = ET.SubElement(td_xml_element, "p")
+    p_xml_element.text = var_name
+
+    if(misc_text != ""):
+        p_misc_xml_element = ET.SubElement(td_xml_element, "p")
+        p_misc_xml_element.text = misc_text
+
+    return td_xml_element
+
+def _HTML_getVarInfo(var_info_dict: dict, 
+                     rowspan: str, 
+                     parent_xml_element: ET.Element,
+                     misc_text: str="") -> ET.Element:
+    """
+    Returns 
+    
+    String, a <td> htm tag with the variable name
+    """
+    # Note xml_element = xe
+    td_xml_element = ET.SubElement(parent_xml_element, 'td')
+    td_xml_element.set('rowspan', rowspan)
+
+    for key, value in var_info_dict.items():
+        p_xml_element = ET.SubElement(td_xml_element, "p")
+        strong_xe = ET.SubElement(p_xml_element, "strong")
+        strong_xe.text = key
+
+        strong_xe.tail = f": {value}"
+
+
+    if(misc_text != ""):
+        p_misc_xml_element = ET.SubElement(td_xml_element, "p")
+        p_misc_xml_element.text = misc_text
+
+    return td_xml_element
+
+def _HTML_getVarDL(var: Var,
+                   parent_xml_element: ET.Element):
+    """
+    DL == Driver/Load
+    
+    Parameters:
+
+    vars : if None, then a dash is entered in the HTML table
+    """
+
+    # Note xml_element = xe
+    td_xml_element = ET.SubElement(parent_xml_element, 'td')
+    if(var == None):
+        p_var_name_xe = ET.SubElement(td_xml_element, 'p')
+        p_var_name_xe.text = "None"
+    else:
+        p_var_name_xe = ET.SubElement(td_xml_element, 'p')
+        p_var_name_xe.text = var.xml_element.get("name")
+
+        p_var_link_xe = ET.SubElement(td_xml_element, 'p')
+        a_var_link_xe = ET.SubElement(p_var_link_xe, 'a')
+
+        # create link to driver/load module
+        var_hier = var.getHierPath()
+        var_hier_wo_name = ".".join(var_hier.split('.')[:-1])
+        instance_html_fpath =   var_hier_wo_name+".html#" +\
+                                var.xml_element.get('name')
+        
+        instance_html_fpath = os.path.join(f"{FILE_PATH_PRE}", 
+                                           instance_html_fpath) 
+
+        a_var_link_xe.set("href", instance_html_fpath)
+
+        # add link text
+        a_var_link_xe.text = var_hier
+
+    return td_xml_element
+
+def writeModuleHTML(module_obj:             ModuleDef, 
+                    files_xml_element:      ET.Element, 
+                    typetable_xml_element:  ET.Element, 
+                    parent_xml_element:     ET.Element,
+                    instance_name:          str=""):
+    """
+    Responsibility
+
+    Writes an HTML file detailing the connectivity of variables in a module
+
+    Parameters:
+
+    module_obj  :   FIXME
+    instance_name   :   FIXME
+    """
+
+    out_html_txt = \
+"""
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+            vertical-align: top;
+         }
+        table {
+            width: 100%
+        }
+        th, td {
+            padding: 2px; 
+        }
+    </style>
+    <h3>Module:</h3>
+    <h3>Instance Hierarchy:</h3>
+    <hr />
+    <table>
+        <tbody>
+            <tr>
+                <td>Vars</td>
+                <td>Info</td>
+                <td>Drivers</td>
+                <td>Load</td>
+            </tr>
+"""
+
+    vars = top_module.vars
+
+
+    for var in vars:
+        # create a new row for this var
+        var_tr_xe = ET.SubElement(parent_xml_element, "tr")
+        drivers = var.findVarDrivers()
+        loads = var.findVarLoads()
+
+        # get row span (from number of drivers/loads)
+        row_span = str(max(len(drivers), len(loads), 1))
+
+        # create var name column
+        var_name_xml = _HTML_getVarName(var.xml_element.get('name'),
+                                         row_span,
+                                         var_tr_xe)
+        
+        # ged data for var info
+        var_info_dict = elaborateDtypeId(var.xml_element.get('dtype_id'), 
+                                           typetable_xml_element)
+
+        loc_info_ls = elaborateLocs(var.xml_element.get('loc'), 
+                                    files_xml_element).split(",")[:-2]
+        
+        # format location info text
+        # "filepath, row_num:col_num"
+        loc_info_txt = loc_info_ls[0]+", " + ":".join(loc_info_ls[1:])
+
+        var_info_dict["loc"] = loc_info_txt
+
+        # FIXME (low priority) Conditions should be more stringent
+        if(var.xml_element.get('localparam') != None):
+            var_info_dict["type"] += ", localparam"
+        if(var.xml_element.get('param') != None):
+            var_info_dict["type"] += ", param"
+        if(var.xml_element.get('dir') != None):
+            var_info_dict["type"] += f", {var.xml_element.get('dir')}"
+
+        # create var info column
+        var_info_xml = _HTML_getVarInfo(var_info_dict, row_span, var_tr_xe)
+
+        # create table listing 
+        curr_var_tr_xe = var_tr_xe
+
+        for i in range(int(row_span)):
+
+            if(i < len(drivers)):
+                var_driver_xml = _HTML_getVarDL(drivers[i], curr_var_tr_xe)
+            else:
+                var_driver_xml = _HTML_getVarDL(None, curr_var_tr_xe)
+
+            if(i < len(loads)):
+                var_load_xml = _HTML_getVarDL(loads[i], curr_var_tr_xe)
+            else:
+                var_load_xml = _HTML_getVarDL(None, curr_var_tr_xe)
+
+            if(i < int(row_span)-1):
+                curr_var_tr_xe = ET.SubElement(parent_xml_element, "tr")
+                             
+
+    print(ET.tostring(var_name_xml))
+    with open("test.xml", "wb") as f:
+        f.write(ET.tostring(parent_xml_element))
+    print(ET.tostring(var_info_xml))
+    # break
+
+    out_html_txt += \
+"""
+        </tbody>
+    </table>
+</head>
+</html>
+"""
+
 ######## MAIN ##########
 
 parser = argparse.ArgumentParser()
@@ -1068,10 +1384,24 @@ find_load_str = ".i_mem_data"
 print("Printing ports and their drivers")
 print(">>>>>>>>>>>>>")
 for var in top_module.vars:
-    for driver in var.findVarLoads():
+    for driver in var.findVarDrivers():
         
         print("{: <30} -> {: <30} {: <20}".format(
             var.xml_element.get('name'), 
             driver.xml_element.get('name'), 
             driver.getHierPath()))
 print("<<<<<<<<<<<<<")
+
+files_xml_element = design_xml_tree.find("files")
+typetable_xml_element = design_xml_tree.find("netlist/typetable")
+
+print()
+print(">>>>>>>>>>>>>")
+print(var.xml_element.attrib)
+print(elaborateLocs(var.xml_element.get('loc'), files_xml_element).split(",")[:-2])
+print(elaborateDtypeId("29", typetable_xml_element))
+print("<<<<<<<<<<<<<")
+
+parent_xml_element = ET.Element("top")
+
+writeModuleHTML(top_module, files_xml_element, typetable_xml_element, parent_xml_element)
