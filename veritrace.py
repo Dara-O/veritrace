@@ -52,7 +52,6 @@ def hexToDec(hex_str: str) -> str:
 
     return int_num
 
-
 def elaborateDtypeId(dtype_id: str, typetable_xml_element: ET.Element) -> dict:
     """
     Responsibility:
@@ -191,7 +190,7 @@ class ConstVar(Var):
     """
     Represtents 
     
-    A constant value typically used to drive vars.
+    A constant value typically used to drive vars like local params.
     This type of Const Var is found in assignments
     """
 
@@ -1157,7 +1156,7 @@ def _HTML_getVarDL(var: Var,
     if(var == None):
         p_var_name_xe = ET.SubElement(td_xml_element, 'p')
         p_var_name_xe.text = "None"
-    else:
+    elif(var.xml_element.tag != "const"):
         p_var_name_xe = ET.SubElement(td_xml_element, 'p')
         p_var_name_xe.text = var.xml_element.get("name")
 
@@ -1177,6 +1176,10 @@ def _HTML_getVarDL(var: Var,
 
         # add link text
         a_var_link_xe.text = var_hier
+    else:
+        # no link for constants
+        p_var_name_xe = ET.SubElement(td_xml_element, 'p')
+        p_var_name_xe.text = var.xml_element.get("name").replace('&apos', "'")
 
     return td_xml_element
 
@@ -1274,6 +1277,9 @@ def writeModuleHTML(module_obj:             ModuleDef,
 
             if(i < len(drivers)):
                 var_driver_xml = _HTML_getVarDL(drivers[i], curr_var_tr_xe)
+            elif(i == 0 and (var.xml_element.get('localparam') is not None 
+                           or var.xml_element.get('parameter') is not None)):
+                var_driver_xml = _HTML_getVarDL(ConstVar(var.xml_element.find("const"), None, None), curr_var_tr_xe)
             else:
                 var_driver_xml = _HTML_getVarDL(None, curr_var_tr_xe)
 
