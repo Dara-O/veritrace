@@ -912,12 +912,23 @@ class ModuleDef():
         """
         Returns 
         
-        List of objects which are drivers of the variable represented by 'var_name'
-            Note:
-            - Objects may be:
-                - port
-                - var
-                - const
+        List of two-entry Tuples:
+            1) object which is a driver of the variable represented by 'var_name'
+                Note:
+                - Object may be:
+                    - port
+                    - var
+                    - const
+
+            2) string, location of where the driving happens. This location...
+               ...could be pointing to an assignment or port connection. 
+               Eg:
+                "c,3,8,3,25"
+               
+               In the example above 'c' is the id of a file, both '3's refer...
+                ...to the line number in the 'c' file. The second number ('8')...
+                ...represents the column where the var name begins, while the...
+                ...last number ('25') tells us when var name ends
 
         Parameters: 
 
@@ -928,14 +939,15 @@ class ModuleDef():
         drivers = []
 
         # only check instance ports and assigns when var is not an input...
-        # ...inputs can't be driven internally
+        # ...since inputs can't be driven internally
         if(self.findVar("."+var_name).xml_element.get('dir') != "input"):
 
             # check instance ports
             for instance in self.instances:
                 for output_instance_port in instance.output_ports:
                     if(var_name in output_instance_port.connections):
-                        drivers.append(output_instance_port)
+                        drivers.append((output_instance_port, 
+                                        output_instance_port.connections[var_name].get('loc')))
         
             # check all the *assign* nodes (or statement)
             for assign in self.assigns:
@@ -957,11 +969,13 @@ class ModuleDef():
                     for assign_driver_xml in assign_drivers_xml:
                         
                         if(ModuleDef.nameContainsConstIndicators(assign_driver_xml.get('name'))):
-                            drivers.append(ConstVar(assign_driver_xml, self, self.root))
+                            drivers.append((ConstVar(assign_driver_xml, self, self.root),
+                                            assign_driver_xml.get('loc')))
                         else:
-                            drivers.append(
-                                self.findVar("."+assign_driver_xml.get('name'))
-                            )
+                            drivers.append((
+                                self.findVar("."+assign_driver_xml.get('name')),
+                                assign_driver_xml.get('loc')
+                            ))
 
         # find external loads if var is an output port and module is an instance
         elif(self.parent_obj is not None):
@@ -973,11 +987,22 @@ class ModuleDef():
         """
         Returns 
         
-        List of objects which are loads of the variable represented by 'var_name'
-            Note:
-            - Objects may be:
-                - port
-                - var
+          List of two-entry Tuples:
+            1) object which is a load of the variable represented by 'var_name'
+                Note:
+                - Objects may be:
+                    - port
+                    - var
+
+            2) string, location of where the loading happens. This location...
+               ...could be pointing to an assignment or port connection. 
+               Eg:
+                "c,3,8,3,25"
+               
+               In the example above 'c' is the id of a file, both '3's refer...
+                ...to the line number in the 'c' file. The second number ('8')...
+                ...represents the column where the var name begins, while the...
+                ...last number ('25') tells us when var name ends
 
         Parameters: 
 
@@ -991,7 +1016,8 @@ class ModuleDef():
         for instance in self.instances:
             for input_instance_port in instance.input_ports:
                 if(var_name in input_instance_port.connections):
-                    loads.append(input_instance_port)
+                    loads.append((input_instance_port,
+                                 input_instance_port.connections[var_name].get('loc')))
 
         # check all the *assign* nodes (or statements)
         for assign in self.assigns:
@@ -1011,9 +1037,10 @@ class ModuleDef():
             if(assign_contains_loads):
                 # append all loads in this assign
                 for assign_load_xml in assign_loads_xml:
-                    loads.append(
-                        self.findVar("."+assign_load_xml.get('name'))
-                    )
+                    loads.append((
+                        self.findVar("."+assign_load_xml.get('name')),
+                        assign_load_xml.get('loc')
+                    ))
 
         # find external loads if var is an output port and module is an instance
         if(
@@ -1387,14 +1414,15 @@ find_load_str = ".i_mem_data"
 
 # get top level ports
 
+print(f"Module name: {top_module.xml_element.get('name')}")
 print("Printing ports and their drivers")
 print(">>>>>>>>>>>>>")
 for var in top_module.vars:
-    for driver in var.findVarDrivers():
+    for driver, loc in var.findVarDrivers():
         
         print("{: <30} -> {: <30} {: <20}".format(
             var.xml_element.get('name'), 
-            driver.xml_element.get('name'), 
+            driver.xml_element.get('name')+" "+loc, 
             driver.getHierPath()))
 print("<<<<<<<<<<<<<")
 
@@ -1410,4 +1438,4 @@ print("<<<<<<<<<<<<<")
 
 parent_xml_element = ET.Element("top")
 
-writeModuleHTML(top_module, files_xml_element, typetable_xml_element, parent_xml_element)
+# writeModuleHTML(top_module, files_xml_element, typetable_xml_element, parent_xml_element)
