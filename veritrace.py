@@ -2,7 +2,8 @@ import argparse
 import xml.etree.ElementTree as ET
 import os
 
-FILE_PATH_PRE = ""
+# FIXME: ADD Colmn names: Var name, Var Info, Drivers, Loads
+# FIXME: Add file name and line number to Examine link (in case the user want's to view it themselves)
 
 def elaborateLocs(loc_str :str, files_xml_element: ET.Element) -> str:
     """
@@ -269,13 +270,33 @@ class Assign():
                 )
             elif(last_child.tag == "arraysel" or last_child.tag == "sel"):
                 # the first varref is typically the load
-                out.append(last_child.find("varref"))
+                potential_load = last_child.find("varref")
+
+                # handling of nested array selection to find true load 
+                if(potential_load == None):
+                    potential_load = last_child.find("arraysel")
+
+                    # the first varref in arraysel tags tends to be the load
+                    if(potential_load != None):
+                        potential_load = potential_load.find("varref")
+                        out.append(potential_load)
+                    else:
+                        potential_loads = list(last_child.iter("varref"))
+                        if (potential_loads != None):
+                            out.extend(potential_loads) 
+                        print(f"Please inspect XML tag '{last_child.tag}'"+ \
+                              f"with attributes {last_child.attrib}. "+\
+                                "Getting all 'varref's in this assignment statement. "+\
+                                "Some may not be true loads"
+                            )
+                else:
+                    out.append(potential_load)
+
             elif(last_child.tag == "delay"):
                 # child before delay tag is contains the load(s)
                 last_child = children[children.index(last_child)-1]
                 repeat = True
             else:
-                print()
                 raise Exception(f"Unnexpected tag type '{last_child.tag}' with attribues: '{last_child.items()}'")
 
         return out
@@ -561,8 +582,12 @@ class ModuleInstance():
         """
         Return
 
-        List of Objects which includes:
-            - Var
+        List of two-entry tuples:
+            1) Object which includes:
+                - Var
+            
+            2) Location of the connection. Eg: "c,32,2,32,6" 
+                Explanation for example: "<file_id>,<line_no>,<begin_col_no>,<line_no>,<end_col_no>"
 
         Parameters:
 
@@ -589,7 +614,8 @@ class ModuleInstance():
                 raise Exception(f"'{port_name}' is connected to an entity that isn't a var. That entity's"\
                                 +f"properties includes '{var_obj.items()}'")
 
-            out.append(var_obj)
+            connection_loc = self.output_ports_dict[port_name].connections[port_connection_name].get('loc')
+            out.append((var_obj, connection_loc))
         
         return out
     
@@ -597,10 +623,12 @@ class ModuleInstance():
         """
         Return
 
-        List of Objects which includes:
-            - Var
-            - ConstVar
-            - ConstLiteral
+        List of  two-entry tuples:
+            1) Object which includes:
+                - Var
+                - ConstVar
+                - ConstLiteral
+            2) location of connection between port name and driver
 
         Parameters:
 
@@ -620,13 +648,16 @@ class ModuleInstance():
         
         # convert connection names to variable objects
         for port_connection_name in port_connection_names:
-            var_obj = self.parent_obj.findVar("."+port_connection_name)
 
-            if(var_obj == None and ModuleDef.nameContainsConstIndicators(port_connection_name)):
+            if(ModuleDef.nameContainsConstIndicators(port_connection_name)):
                 const_xml_element = self.input_ports_dict[port_name].connections[port_connection_name]
-                out.append(ConstLiteral(const_xml_element, self, self.root))
+                const_assign_loc = const_xml_element.get('loc')
+                out.append((ConstLiteral(const_xml_element, self, self.root), 
+                            const_assign_loc))
             else:
-                out.append(var_obj)
+                var_obj = self.parent_obj.findVar("."+port_connection_name)
+                connection_loc = self.input_ports_dict[port_name].connections[port_connection_name].get('loc')
+                out.append((var_obj, connection_loc))
         
         return out
 
@@ -634,12 +665,23 @@ class ModuleInstance():
         """
         Returns 
         
-        List of objects which are driver of 'var_name'
-            Note:
-            - Objects may be:
-                - port
-                - var
-                - const
+        List of two-entry Tuples:
+            1) object which is a driver of the variable represented by 'var_name'
+                Note:
+                - Object may be:
+                    - port
+                    - var
+                    - const
+
+            2) string, location of where the driving happens. This location...
+               ...could be pointing to an assignment or port connection. 
+               Eg:
+                "c,3,8,3,25"
+               
+               In the example above 'c' is the id of a file, both '3's refer...
+                ...to the line number in the 'c' file. The second number ('8')...
+                ...represents the column where the var name begins, while the...
+                ...last number ('25') tells us when var name ends
         
         Parameters 
 
@@ -653,12 +695,15 @@ class ModuleInstance():
         """
         Returns 
         
-        List of objects which are loads of 'var_name'
-            Note:
-            - Objects may be:
-                - port
-                - var
+        List of two-entry tuples:
+            1) object which are loads of 'var_name'
+                Objects may be:
+                    - port
+                    - var
         
+            2) Location of the connection. Eg: "c,32,2,32,6" 
+                Explanation for example: "<file_id>,<line_no>,<begin_col_no>,<line_no>,<end_col_no>"
+
         Parameters 
 
         var_name : string, Name of the variable whose loads should be found. 
@@ -908,7 +953,7 @@ class ModuleDef():
 
         return out
     
-    def findVarDrivers(self, var_name):
+    def findVarDrivers(self, var_name) -> list[tuple]:
         """
         Returns 
         
@@ -1168,21 +1213,41 @@ def _HTML_getVarInfo(var_info_dict: dict,
 
     return td_xml_element
 
-def _HTML_getVarDL(var: Var,
-                   parent_xml_element: ET.Element):
+def _HTML_getVarDL(var:                 Var,
+                   dl_loc_ls:           list,
+                   parent_xml_element:  ET.Element,
+                   link_path_prefix:    str=""):
     """
-    DL == Driver/Load
+    Responsibility:
+
+    Creates a HTML table entry for the driver/load variable/const
     
+    Returns:
+
+    td_xml_element : xml.etree.ElementTree.Element for the...
+                        HTML data created by this function
+
     Parameters:
 
-    vars : if None, then a dash is entered in the HTML table
+    var : if None, then a None is entered in the HTML table.
+            Else, Var object
+    
+    dl_loc_ls  :    list of two items, location where driving/loading takes place.
+                    1) string, file where driver-load connection is made
+                    2) string, line number of where driver-load connection is made
+
+    
+    link_path_prefix : string, prefix for the path to linked HTML files
+
     """
 
     # Note xml_element = xe
+    # create table data
     td_xml_element = ET.SubElement(parent_xml_element, 'td')
     if(var == None):
         p_var_name_xe = ET.SubElement(td_xml_element, 'p')
         p_var_name_xe.text = "None"
+
     elif(var.xml_element.tag != "const"):
         p_var_name_xe = ET.SubElement(td_xml_element, 'p')
         p_var_name_xe.text = var.xml_element.get("name")
@@ -1190,31 +1255,64 @@ def _HTML_getVarDL(var: Var,
         p_var_link_xe = ET.SubElement(td_xml_element, 'p')
         a_var_link_xe = ET.SubElement(p_var_link_xe, 'a')
 
-        # create link to driver/load module
+        # create link to driver/load connectivity table
         var_hier = var.getHierPath()
         var_hier_wo_name = ".".join(var_hier.split('.')[:-1])
         instance_html_fpath =   var_hier_wo_name+".html#" +\
                                 var.xml_element.get('name')
         
-        instance_html_fpath = os.path.join(f"{FILE_PATH_PRE}", 
-                                           instance_html_fpath) 
+        # instance_html_fpath = os.path.join(f"{link_path_prefix}", 
+        #                                    instance_html_fpath) 
 
         a_var_link_xe.set("href", instance_html_fpath)
 
         # add link text
         a_var_link_xe.text = var_hier
-    else:
+
+        # create link to driver/load connection in RTL
+        p_var_dl_loc_link_xe = ET.SubElement(td_xml_element, 'p')
+        a_var_dl_loc_link_xe = ET.SubElement(p_var_dl_loc_link_xe, 'a')
+
+        # create hyperlink to file
+        html_file = dl_loc_ls[0].replace("//", "/").replace("/", "__")+".html"
+        # html_file = os.path.join(f"{link_path_prefix}", 
+        #                          html_file)
+        html_id = "#"+dl_loc_ls[1]
+        a_var_dl_loc_link_xe.set("href", html_file+html_id)
+
+        # add link text. "Examine RTL: <filepath>:<line_number>"
+        a_var_dl_loc_link_xe.text = "Examine RTL: " + dl_loc_ls[0].replace("//", "/") +\
+                                                      ":"+ dl_loc_ls[1]
+    
+    else: 
         # no link for constants
         p_var_name_xe = ET.SubElement(td_xml_element, 'p')
         p_var_name_xe.text = var.xml_element.get("name").replace('&apos', "'")
 
+        # create link to driver/load connection in RTL
+        p_var_dl_loc_link_xe = ET.SubElement(td_xml_element, 'p')
+        a_var_dl_loc_link_xe = ET.SubElement(p_var_dl_loc_link_xe, 'a')
+
+        # create hyperlink to file
+        html_file = dl_loc_ls[0].replace("//", "/").replace("/", "__")+".html"
+        # html_file = os.path.join(f"{link_path_prefix}", 
+        #                          html_file)
+        html_id = "#"+dl_loc_ls[1]
+        a_var_dl_loc_link_xe.set("href", html_file+html_id)
+
+        # add link text
+        a_var_dl_loc_link_xe.text = "Examine RTL: " + dl_loc_ls[0].replace("//", "/") +\
+                                                      ":"+ dl_loc_ls[1]
+
     return td_xml_element
 
-def writeModuleHTML(module_obj:             ModuleDef, 
+def createConnectivityHTMLTable(
+                    module_obj:             ModuleDef, 
                     files_xml_element:      ET.Element, 
-                    typetable_xml_element:  ET.Element, 
+                    typetable_xml_element:  ET.Element,
+                    link_path_prefix:       str, 
                     parent_xml_element:     ET.Element,
-                    instance_name:          str=""):
+    ):
     """
     Responsibility
 
@@ -1226,47 +1324,19 @@ def writeModuleHTML(module_obj:             ModuleDef,
     instance_name   :   FIXME
     """
 
-    out_html_txt = \
-"""
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        table, th, td {
-            border: 1px solid black;
-            vertical-align: top;
-         }
-        table {
-            width: 100%
-        }
-        th, td {
-            padding: 2px; 
-        }
-    </style>
-    <h3>Module:</h3>
-    <h3>Instance Hierarchy:</h3>
-    <hr />
-    <table>
-        <tbody>
-            <tr>
-                <td>Vars</td>
-                <td>Info</td>
-                <td>Drivers</td>
-                <td>Load</td>
-            </tr>
-"""
-
-    vars = top_module.vars
+    vars = module_obj.vars
 
 
     for var in vars:
         # create a new row for this var
         var_tr_xe = ET.SubElement(parent_xml_element, "tr")
-        drivers = var.findVarDrivers()
-        loads = var.findVarLoads()
+
+        # list of tuples. (Var-like object, string)
+        drivers_w_loc = var.findVarDrivers()
+        loads_w_loc = var.findVarLoads()
 
         # get row span (from number of drivers/loads)
-        row_span = str(max(len(drivers), len(loads), 1))
+        row_span = str(max(len(drivers_w_loc), len(loads_w_loc), 1))
 
         # create var name column
         var_name_xml = _HTML_getVarName(var.xml_element.get('name'),
@@ -1299,39 +1369,138 @@ def writeModuleHTML(module_obj:             ModuleDef,
 
         # create table listing 
         curr_var_tr_xe = var_tr_xe
-
+        
+        # populate table with drivers and loads
         for i in range(int(row_span)):
 
-            if(i < len(drivers)):
-                var_driver_xml = _HTML_getVarDL(drivers[i], curr_var_tr_xe)
+            if(i < len(drivers_w_loc)):
+                driving_loc_ls = elaborateLocs(drivers_w_loc[i][1], 
+                                            files_xml_element).split(",")[:-2]
+                
+                var_driver_xml = _HTML_getVarDL(drivers_w_loc[i][0], 
+                                                driving_loc_ls, 
+                                                curr_var_tr_xe, 
+                                                link_path_prefix)
+            
             elif(i == 0 and (var.xml_element.get('localparam') is not None 
-                           or var.xml_element.get('parameter') is not None)):
-                var_driver_xml = _HTML_getVarDL(ConstVar(var.xml_element.find("const"), None, None), curr_var_tr_xe)
+                             or var.xml_element.get('parameter') is not None)):
+                
+                tmp_const_obj = ConstVar(var.xml_element.find("const"), None, None)
+                tmp_const_loc_str = tmp_const_obj.xml_element.get('loc')
+                tmp_const_loc_ls = elaborateLocs(tmp_const_loc_str, 
+                                                files_xml_element).split(",")[:-2]
+                
+                var_driver_xml = _HTML_getVarDL(tmp_const_obj, 
+                                                tmp_const_loc_ls,
+                                                curr_var_tr_xe, 
+                                                link_path_prefix)
+            
             else:
-                var_driver_xml = _HTML_getVarDL(None, curr_var_tr_xe)
+                var_driver_xml = _HTML_getVarDL(None, 
+                                                ["", ""], 
+                                                curr_var_tr_xe, 
+                                                link_path_prefix)
 
-            if(i < len(loads)):
-                var_load_xml = _HTML_getVarDL(loads[i], curr_var_tr_xe)
+            if(i < len(loads_w_loc)):
+                loading_loc_ls = elaborateLocs(loads_w_loc[i][1], 
+                                            files_xml_element).split(",")[:-2]
+
+                var_load_xml = _HTML_getVarDL(loads_w_loc[i][0], 
+                                              loading_loc_ls, 
+                                              curr_var_tr_xe,
+                                              link_path_prefix)
             else:
-                var_load_xml = _HTML_getVarDL(None, curr_var_tr_xe)
+                var_load_xml = _HTML_getVarDL(None, 
+                                              ["", ""], 
+                                              curr_var_tr_xe,
+                                              link_path_prefix)
 
             if(i < int(row_span)-1):
                 curr_var_tr_xe = ET.SubElement(parent_xml_element, "tr")
-                             
 
-    print(ET.tostring(var_name_xml))
-    with open("test.xml", "wb") as f:
-        f.write(ET.tostring(parent_xml_element))
-    print(ET.tostring(var_info_xml))
-    # break
+def createModuleConnectivityHTML(                    
+                    module_obj:             ModuleDef, 
+                    files_xml_element:      ET.Element, 
+                    typetable_xml_element:  ET.Element, 
+                    link_path_prefix:       str,        
+                    instance_name:          str=""
+    ):
 
-    out_html_txt += \
-"""
-        </tbody>
-    </table>
-</head>
-</html>
-"""
+    # xe == xml_element
+    html_xe = ET.Element("html")
+    head_html_xe = ET.SubElement(html_xe, "head")
+    head_style_html_xe = ET.SubElement(head_html_xe, "style")
+    head_style_html_xe.text = \
+    """
+        table,
+        th,
+        td {
+            border: 1px solid black;
+            vertical-align: top;
+        }
+
+        table {
+            width: 75%
+        }
+
+        th,
+        td {
+            padding: 2px;
+        }
+    """
+
+    HTML_HEADING_TAG = "h3"
+
+    _instance_name = "" 
+    if(instance_name == ""):
+        _instance_name = module_obj.xml_element.get('name')
+    else:
+        _instance_name = instance_name
+
+    body_html_xe = ET.SubElement(html_xe, "body")
+    
+    ### Instance name header ###
+    inst_name_header_html_xe = ET.SubElement(body_html_xe, HTML_HEADING_TAG)
+    inst_name_header_html_xe.text = "Instance Name: "
+
+    # not boldened
+    nb_inst_name_header_html_xe = ET.SubElement(inst_name_header_html_xe, "span")
+    nb_inst_name_header_html_xe.set("style", "font-weight:normal")
+    nb_inst_name_header_html_xe.text = _instance_name
+
+    ### Module name header ###
+    module_header_html_xe = ET.SubElement(body_html_xe, HTML_HEADING_TAG)
+    module_header_html_xe.text = "Module: " 
+
+    # not boldened
+    nb_module_header_html_xe = ET.SubElement(module_header_html_xe, "span")
+    nb_module_header_html_xe.set("style", "font-weight:normal")
+    nb_module_header_html_xe.text = module_obj.xml_element.get('name')
+
+    ### Instance Hierarchy header ###
+    inst_hier_header_html_xe = ET.SubElement(body_html_xe, HTML_HEADING_TAG)
+    inst_hier_header_html_xe.text = "Instance Hierarchy: " 
+
+    # not boldened
+    nb_inst_hier_header_html_xe = ET.SubElement(inst_hier_header_html_xe, "span")
+    nb_inst_hier_header_html_xe.set("style", "font-weight:normal")
+    nb_inst_hier_header_html_xe.text = module_obj.getHierPath()
+
+    ### Connectivity Table ###
+    table_html_xe = ET.SubElement(body_html_xe, "table")
+    tbody_html_xe = ET.SubElement(table_html_xe, "tbody")
+    createConnectivityHTMLTable(module_obj, 
+                                files_xml_element, 
+                                typetable_xml_element, 
+                                link_path_prefix,
+                                tbody_html_xe)
+
+    # Write HTML file
+    html_xe = ET.ElementTree(html_xe)
+    ET.indent(html_xe)
+    out_html_file_path = os.path.join(link_path_prefix, 
+                                      module_obj.getHierPath()+".html")
+    html_xe.write(out_html_file_path, method='html', short_empty_elements=False) 
 
 ######## MAIN ##########
 
@@ -1363,23 +1532,10 @@ for module in design_xml_tree.findall("./netlist/module"):
 top_module = ModuleDef(xml_top_module, xml_submodules, None)
 
 print("Top Module name:", top_module.xml_element.get('name'))
-# print("Top Module Instances:")
-# for instance in top_module.instances:
-#     print("\tInstance Attrs:",instance.xml_element.items())
-
-
-test_var = top_module.instances[5].module_def.instances[2].module_def.instances[0].module_def.vars[0]
-print(test_var.getHierPath())
-# test_find_var_out = top_module.findVar("."+".".join(test_var.getHierPath().split('.')[1:]))
-test_find_var_out = top_module.findVar(".i_addr")
-print(test_find_var_out.xml_element.get('name'))
 
 all_vars = top_module.getAllVars()
 
 print("Num of vars:", len(all_vars))
-
-# for var in all_vars:
-#     print(var.getHierPath())
 
 print()
 
@@ -1387,34 +1543,9 @@ all_instances = top_module.getAllInstances()
 
 print("Num of Instances:", len(all_instances))
 
-# for instance in all_instances:
-#     print(instance.getHierPath())
-
 print()
 
-find_load_str = ".i_mem_data"
-# print("Printing Loads for", find_load_str)
-# for load in top_module.findVar(find_load_str).findVarLoads():
-#     print(" Load tag: ", load.xml_element.tag)
-#     print(" Load Attibutes:", load.xml_element.items())
-#     print(" Load Parent tag:", load.parent_obj.xml_element.tag)
-#     print(" Load Parent Attibutes", load.parent_obj.xml_element.items())
-#     print(" "+load.getHierPath())
-
-#     count = 2
-#     while(not((load.parent_obj.parent_obj is None) and (load.xml_element.get('dir') == "output"))):
-#         load = load.findVarLoads()[0]
-#         print(("  "*count)+"Load tag: ", load.xml_element.tag)
-#         print(("  "*count)+"Load Attibutes:", load.xml_element.items())
-#         print(("  "*count)+"Load Parent tag:", load.parent_obj.xml_element.tag)
-#         print(("  "*count)+"Load Parent Attibutes", load.parent_obj.xml_element.items())
-#         print(("  "*count)+load.getHierPath())
-
-#         count += 1
-
-# get top level ports
-
-print(f"Module name: {top_module.xml_element.get('name')}")
+print(f"Top Module name: {top_module.xml_element.get('name')}")
 print("Printing ports and their drivers")
 print(">>>>>>>>>>>>>")
 for var in top_module.vars:
@@ -1429,13 +1560,8 @@ print("<<<<<<<<<<<<<")
 files_xml_element = design_xml_tree.find("files")
 typetable_xml_element = design_xml_tree.find("netlist/typetable")
 
-print()
-print(">>>>>>>>>>>>>")
-print(var.xml_element.attrib)
-print(elaborateLocs(var.xml_element.get('loc'), files_xml_element).split(",")[:-2])
-print(elaborateDtypeId("29", typetable_xml_element))
-print("<<<<<<<<<<<<<")
+createModuleConnectivityHTML(top_module, files_xml_element, typetable_xml_element, "html_files/", "")
 
-parent_xml_element = ET.Element("top")
-
-# writeModuleHTML(top_module, files_xml_element, typetable_xml_element, parent_xml_element)
+for instance in all_instances:
+    createModuleConnectivityHTML(instance.module_def, files_xml_element, typetable_xml_element, 
+                             "html_files/", instance.xml_element.get('name'))
