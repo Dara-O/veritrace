@@ -4,6 +4,8 @@ import os
 
 # FIXME: ADD Colmn names: Var name, Var Info, Drivers, Loads
 # FIXME: Add file name and line number to Examine link (in case the user want's to view it themselves)
+# FIXME: Let each stage in the Module Instance Heirarchy be a link to that instance's connectivity table
+# FIXME: Fix all FIXME's (ctrl+f)
 
 def elaborateLocs(loc_str :str, files_xml_element: ET.Element) -> str:
     """
@@ -1447,7 +1449,56 @@ def createModuleConnectivityHTML(
         td {
             padding: 2px;
         }
+
+        @import "compass/css3";
+
+        /**
+        * Use the :target pseudo-element to apply
+        * styles to the element with the same ID as  
+        * the fragment identifier.
+        * (e.g. `#target-section`)
+        * 
+        * The pseudo-element can also be used in
+        * conjunction with another selector to 
+        * define a variety of target styles.
+        * (e.g. `#target-section:target)
+        */
+
+        :target {
+            -webkit-animation: target-fade 1s;
+            -moz-animation: target-fade 1s;
+            -o-animation: target-fade 1s;
+            animation: target-fade 1s;
+        }
+
+
+        /**
+        * Keyframe animation definition
+        * 
+        * 1. Insert a color of your choice here
+        */
+
+        @-webkit-keyframes target-fade {
+            from { background-color: yellow; } /* [1] */
+            to { background-color: transparent; }
+        }
+
+        @-moz-keyframes target-fade {
+            from { background-color: yellow; } /* [1] */
+            to { background-color: transparent; }
+        }
+
+        @-o-keyframes target-fade {
+            from { background-color: yellow; } /* [1] */
+            to { background-color: transparent; }
+        }
+
+        @keyframes target-fade {
+            from { background-color: yellow; } /* [1] */
+            to { background-color: transparent; }
+        }
     """
+    # some of the code above was copied from: https://codepen.io/anon/pen/xfjrh
 
     HTML_HEADING_TAG = "h3"
 
@@ -1542,20 +1593,6 @@ print()
 all_instances = top_module.getAllInstances()
 
 print("Num of Instances:", len(all_instances))
-
-print()
-
-print(f"Top Module name: {top_module.xml_element.get('name')}")
-print("Printing ports and their drivers")
-print(">>>>>>>>>>>>>")
-for var in top_module.vars:
-    for driver, loc in var.findVarDrivers():
-        
-        print("{: <30} -> {: <30} {: <20}".format(
-            var.xml_element.get('name'), 
-            driver.xml_element.get('name')+" "+loc, 
-            driver.getHierPath()))
-print("<<<<<<<<<<<<<")
 
 files_xml_element = design_xml_tree.find("files")
 typetable_xml_element = design_xml_tree.find("netlist/typetable")
