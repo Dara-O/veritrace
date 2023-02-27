@@ -3,7 +3,6 @@ import xml.etree.ElementTree as ET
 import os
 
 # FIXME: ADD Colmn names: Var name, Var Info, Drivers, Loads
-# FIXME: Add file name and line number to Examine link (in case the user want's to view it themselves)
 # FIXME: Let each stage in the Module Instance Heirarchy be a link to that instance's connectivity table
 # FIXME: Fix all FIXME's (ctrl+f)
 
@@ -111,7 +110,7 @@ class ConstLiteral():
     """
     Represents:
 
-    Contant value used to tieoff ports
+    Contant value typically used to tieoff ports
     """
 
     def __init__(self, xml_element, parent_obj, root):
@@ -133,7 +132,7 @@ class ConstLiteral():
 
 class Var():
     """
-    Represents a Var. This may be:
+    Represents a Verilog Variable. This may be:
         - param or localparam
         - reg or wire
     """
@@ -324,10 +323,26 @@ class Assign():
         driver_children = None
         if(children[-1].tag == 'delay'):
             # When last child is a delay, every child except the second to last child are typically drivers
-            driver_children = xml_element.findall("./*")[:-2]
+            driver_children = children[:-2]
+        elif(children[-1].tag == 'sel'):
+            
+            driver_children = []
+
+            # find all variables which may be indexes for the array
+            children_arraysels = list(children[-1].iter("arraysel"))
+            
+            for children_arraysel in children_arraysels:
+                
+                driver_children.append(children_arraysel.find("varref[last()]"))
+
+            # find all variables which may be indexes for the vector
+            children_sel_varrefs = children[-1].findall("varref")
+            if(len(children_arraysels) > 1):
+                driver_children.extend(children_sel_varrefs[1:])
+
         else:
             # Every child except the last child are typically drivers
-            driver_children = xml_element.findall("./*")[:-1]
+            driver_children = children[:-1]
 
         for driver_child in driver_children:
             if(driver_child.tag != "varref" and driver_child.tag != "const"):
@@ -469,7 +484,8 @@ class ModuleInstance():
 
         Parameters:
 
-        xml_element :   # FIXME: elaborate
+        xml_element :   an xml.etree.ElementTree.Element object. This object is...
+                        ...the xml node that defines the Instancee
         
         xml_modules : list of xml.etree.ElementTree.Elements objects for all submodules
 
@@ -739,11 +755,22 @@ class ModuleDef():
     __CONST_INDICATOR_1 = "&apos"
     __CONST_INDICATOR_2 = "'"
 
-    def __init__(self, xml_element, xml_modules, parent_obj=None, root=None):
+    def __init__(self, 
+                 xml_element: ET.Element, 
+                 xml_modules: list, 
+                 parent_obj: ModuleInstance=None, 
+                 root=None):
         """
         Params:
 
-        xml_modules : list of xml.etree.ElementTree.Elements objects for all submodules
+        xml_element : xml.etree.ElementTree.Element object
+
+        xml_modules :   list of xml.etree.ElementTree.Elements objects...
+                        ...for all submodules. 
+        
+        parent_obj  :   ModuleInstance object, which is an instance in RTL of This module type
+
+        root        : ModuleDef Object, The root module in the design heirarchy
         """
         
         self.xml_element = xml_element
@@ -778,12 +805,13 @@ class ModuleDef():
                         - assign
                         - assigndly
                         - contassign
+
+        root        : ModuleDef Object, The root module in the design heirarchy
         """
 
         out = []
 
         # get all *assign* tags in the module (analogous to assignments in an RTL Module)
-        # FIXME: Create a defines package/module to encapsulate all the types of assignments
         for assign_type in ["contassign", "assign", "assigndly"]:
             for assign in xml_element.iter(assign_type):
                 out.append(Assign(assign, self, root))
@@ -828,7 +856,10 @@ class ModuleDef():
 
         return out
 
-    def _populateInstances(self, xml_element, xml_modules, root) -> list:
+    def _populateInstances(self, 
+                           xml_element: ET.Element, 
+                           xml_modules: list[ET.Element], 
+                           root) -> list:
         """
         Returns: 
 
@@ -852,7 +883,7 @@ class ModuleDef():
 
         return out
 
-    def _populateVars(self, xml_element, root) -> list:
+    def _populateVars(self, xml_element: ET.Element, root) -> list:
         """
         Returns:
 
@@ -955,7 +986,7 @@ class ModuleDef():
 
         return out
     
-    def findVarDrivers(self, var_name) -> list[tuple]:
+    def findVarDrivers(self, var_name: str) -> list[tuple]:
         """
         Returns 
         
@@ -1030,7 +1061,7 @@ class ModuleDef():
 
         return drivers
 
-    def findVarLoads(self, var_name):
+    def findVarLoads(self, var_name: str) -> list[tuple]:
         """
         Returns 
         
@@ -1108,7 +1139,7 @@ class ModuleDef():
         ...within this module 
 
         Parameters:
-        #FIXME: Use instance path instead
+
         instance_name   :   string, name of instance whose port will be searched for connections
 
         port_name   :   string, name of port on the instance to search for connections
@@ -1123,7 +1154,9 @@ class ModuleDef():
             if(instance.xml_element.get('name') == instance_name):
                 instnace_obj = instance
                 break
-        
+        if(instnace_obj == None):
+            Exception(f"Instance named '{instance_name}' can't be found in module '{self.xml_element.get('name')}'")
+
         # find port & names of its connections
         port_connection_names = []
         for port in instnace_obj.ports:
@@ -1155,11 +1188,6 @@ class ModuleDef():
             )
             
             return out
-
-def getParamValue(param_xml_element):
-    """
-    Retunrs string of value assinged to a param or localparam
-    """
 
 def _HTML_getVarName(var_name: str, 
                      rowspan: str, 
@@ -1465,10 +1493,10 @@ def createModuleConnectivityHTML(
         */
 
         :target {
-            -webkit-animation: target-fade 1s;
-            -moz-animation: target-fade 1s;
-            -o-animation: target-fade 1s;
-            animation: target-fade 1s;
+            -webkit-animation: target-fade 1.5s;
+            -moz-animation: target-fade 1.5s;
+            -o-animation: target-fade 1.5s;
+            animation: target-fade 1.5s;
         }
 
 
