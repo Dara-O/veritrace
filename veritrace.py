@@ -322,7 +322,8 @@ class Assign():
         
         driver_children = None
         if(children[-1].tag == 'delay'):
-            # When last child is a delay, every child except the second to last child are typically drivers
+            # When last child is a delay, every child except the second...
+            # ...to last child are typically drivers
             driver_children = children[:-2]
         elif(children[-1].tag == 'sel'):
             
@@ -1279,20 +1280,17 @@ def _HTML_getVarDL(var:                 Var,
         p_var_name_xe.text = "None"
 
     elif(var.xml_element.tag != "const"):
-        p_var_name_xe = ET.SubElement(td_xml_element, 'p')
-        p_var_name_xe.text = var.xml_element.get("name")
+        h4_var_name_xe = ET.SubElement(td_xml_element, 'h4')
+        h4_var_name_xe.text = var.xml_element.get("name")
 
+        # create link to driver/load connectivity table
         p_var_link_xe = ET.SubElement(td_xml_element, 'p')
         a_var_link_xe = ET.SubElement(p_var_link_xe, 'a')
 
-        # create link to driver/load connectivity table
         var_hier = var.getHierPath()
         var_hier_wo_name = ".".join(var_hier.split('.')[:-1])
         instance_html_fpath =   var_hier_wo_name+".html#" +\
                                 var.xml_element.get('name')
-        
-        # instance_html_fpath = os.path.join(f"{link_path_prefix}", 
-        #                                    instance_html_fpath) 
 
         a_var_link_xe.set("href", instance_html_fpath)
 
@@ -1346,7 +1344,7 @@ def createConnectivityHTMLTable(
     """
     Responsibility
 
-    Writes an HTML file detailing the connectivity of variables in a module
+    Create an HTML file detailing the connectivity of variables in a module
 
     Parameters:
 
@@ -1568,6 +1566,25 @@ def createModuleConnectivityHTML(
     ### Connectivity Table ###
     table_html_xe = ET.SubElement(body_html_xe, "table")
     tbody_html_xe = ET.SubElement(table_html_xe, "tbody")
+
+    # header row
+    tr_table_header_html_xe = ET.SubElement(tbody_html_xe, "tr")
+    td_tr_table_header_html_xe = ET.SubElement(tr_table_header_html_xe, "td")
+    p_d_tr_table_header_html_xe = ET.SubElement(td_tr_table_header_html_xe, "h4")
+    p_d_tr_table_header_html_xe.text = "Variable Name"
+
+    td_tr_table_header_html_xe = ET.SubElement(tr_table_header_html_xe, "td")
+    p_d_tr_table_header_html_xe = ET.SubElement(td_tr_table_header_html_xe, "h4")
+    p_d_tr_table_header_html_xe.text = "Variable Info"
+
+    td_tr_table_header_html_xe = ET.SubElement(tr_table_header_html_xe, "td")
+    p_d_tr_table_header_html_xe = ET.SubElement(td_tr_table_header_html_xe, "h4")
+    p_d_tr_table_header_html_xe.text = "Driver"
+
+    td_tr_table_header_html_xe = ET.SubElement(tr_table_header_html_xe, "td")
+    p_d_tr_table_header_html_xe = ET.SubElement(td_tr_table_header_html_xe, "h4")
+    p_d_tr_table_header_html_xe.text = "Load"
+
     createConnectivityHTMLTable(module_obj, 
                                 files_xml_element, 
                                 typetable_xml_element, 
