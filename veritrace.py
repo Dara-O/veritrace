@@ -2,8 +2,6 @@ import argparse
 import xml.etree.ElementTree as ET
 import os
 
-# FIXME: ADD Colmn names: Var name, Var Info, Drivers, Loads
-# FIXME: Let each stage in the Module Instance Heirarchy be a link to that instance's connectivity table
 # FIXME: Fix all FIXME's (ctrl+f)
 
 def elaborateLocs(loc_str :str, files_xml_element: ET.Element) -> str:
@@ -1299,6 +1297,7 @@ def _HTML_getVarDL(var:                 Var,
 
         # create link to driver/load connection in RTL
         p_var_dl_loc_link_xe = ET.SubElement(td_xml_element, 'p')
+        p_var_dl_loc_link_xe.text = "Examine RTL: "
         a_var_dl_loc_link_xe = ET.SubElement(p_var_dl_loc_link_xe, 'a')
 
         # create hyperlink to file
@@ -1308,9 +1307,8 @@ def _HTML_getVarDL(var:                 Var,
         html_id = "#"+dl_loc_ls[1]
         a_var_dl_loc_link_xe.set("href", html_file+html_id)
 
-        # add link text. "Examine RTL: <filepath>:<line_number>"
-        a_var_dl_loc_link_xe.text = "Examine RTL: " + dl_loc_ls[0].replace("//", "/") +\
-                                                      ":"+ dl_loc_ls[1]
+        # add link text. "<filepath>:<line_number>"
+        a_var_dl_loc_link_xe.text = dl_loc_ls[0].replace("//", "/") +":"+ dl_loc_ls[1]
     
     else: 
         # no link for constants
@@ -1319,6 +1317,7 @@ def _HTML_getVarDL(var:                 Var,
 
         # create link to driver/load connection in RTL
         p_var_dl_loc_link_xe = ET.SubElement(td_xml_element, 'p')
+        p_var_dl_loc_link_xe.text = "Examine RTL: "
         a_var_dl_loc_link_xe = ET.SubElement(p_var_dl_loc_link_xe, 'a')
 
         # create hyperlink to file
@@ -1329,12 +1328,11 @@ def _HTML_getVarDL(var:                 Var,
         a_var_dl_loc_link_xe.set("href", html_file+html_id)
 
         # add link text
-        a_var_dl_loc_link_xe.text = "Examine RTL: " + dl_loc_ls[0].replace("//", "/") +\
-                                                      ":"+ dl_loc_ls[1]
+        a_var_dl_loc_link_xe.text = dl_loc_ls[0].replace("//", "/") +":"+ dl_loc_ls[1]
 
     return td_xml_element
 
-def createConnectivityHTMLTable(
+def _HTML_createConnectivityTable(
                     module_obj:             ModuleDef, 
                     files_xml_element:      ET.Element, 
                     typetable_xml_element:  ET.Element,
@@ -1446,6 +1444,51 @@ def createConnectivityHTMLTable(
             if(i < int(row_span)-1):
                 curr_var_tr_xe = ET.SubElement(parent_xml_element, "tr")
 
+def _HTML_createInstHierHeading(
+                    parent_html_xe:     ET.Element,
+                    heading_tag:        str,
+                    hier_path:          str  
+    ):
+    """
+    Returns 
+    
+    xml.etree.ElementTree.Element, a <h*> html tag (* could be 3,4, etc)
+
+    Parameters:
+
+    parent_html_xe  :   xml.etree.ElementTree.Element, represents the...
+                        ...parent HTML tag within which the heading will...
+                        ...be created
+
+                        Typically a <body> tag
+    
+    heading_tag     :   string, the HTML tag to be used for the heading
+
+    hier_path       :   string, the hierarchical path of the module instance     
+    """
+
+    ### Instance Hierarchy header ###
+    inst_hier_header_html_xe = ET.SubElement(parent_html_xe, heading_tag)
+    inst_hier_header_html_xe.text = "Instance Hierarchy: " 
+
+    # not boldened
+    nb_inst_hier_header_html_xe = ET.SubElement(inst_hier_header_html_xe, "span")
+    nb_inst_hier_header_html_xe.set("style", "font-weight:normal")
+
+    # links to parent and ancestor instances
+    ancestral_instances = hier_path.split(".")
+    for i in range(len(ancestral_instances)):
+        links_inst_hier_header_html_xe = ET.SubElement(nb_inst_hier_header_html_xe, "a")
+        
+        ancestor_link = ".".join(ancestral_instances[:(i+1)])
+        ancestor_link += ".html"
+        
+        links_inst_hier_header_html_xe.set("href", ancestor_link)
+        links_inst_hier_header_html_xe.text = ancestral_instances[i]
+
+        if(i < len(ancestral_instances)-1):
+            links_inst_hier_header_html_xe.tail = "."
+
 def createModuleConnectivityHTML(                    
                     module_obj:             ModuleDef, 
                     files_xml_element:      ET.Element, 
@@ -1554,14 +1597,9 @@ def createModuleConnectivityHTML(
     nb_module_header_html_xe.set("style", "font-weight:normal")
     nb_module_header_html_xe.text = module_obj.xml_element.get('name')
 
-    ### Instance Hierarchy header ###
-    inst_hier_header_html_xe = ET.SubElement(body_html_xe, HTML_HEADING_TAG)
-    inst_hier_header_html_xe.text = "Instance Hierarchy: " 
+    # ### Instance Hierarchy header ###
+    _HTML_createInstHierHeading(body_html_xe, HTML_HEADING_TAG, module_obj.getHierPath())
 
-    # not boldened
-    nb_inst_hier_header_html_xe = ET.SubElement(inst_hier_header_html_xe, "span")
-    nb_inst_hier_header_html_xe.set("style", "font-weight:normal")
-    nb_inst_hier_header_html_xe.text = module_obj.getHierPath()
 
     ### Connectivity Table ###
     table_html_xe = ET.SubElement(body_html_xe, "table")
@@ -1585,7 +1623,7 @@ def createModuleConnectivityHTML(
     p_d_tr_table_header_html_xe = ET.SubElement(td_tr_table_header_html_xe, "h4")
     p_d_tr_table_header_html_xe.text = "Load"
 
-    createConnectivityHTMLTable(module_obj, 
+    _HTML_createConnectivityTable(module_obj, 
                                 files_xml_element, 
                                 typetable_xml_element, 
                                 link_path_prefix,
