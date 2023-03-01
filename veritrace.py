@@ -2,6 +2,7 @@ import argparse
 import xml.etree.ElementTree as ET
 import os
 
+# FIXME: finish create_rtl_html.py
 # FIXME: Fix all FIXME's (ctrl+f)
 
 def elaborateLocs(loc_str :str, files_xml_element: ET.Element) -> str:
@@ -1245,7 +1246,7 @@ def _HTML_getVarInfo(var_info_dict: dict,
 def _HTML_getVarDL(var:                 Var,
                    dl_loc_ls:           list,
                    parent_xml_element:  ET.Element,
-                   link_path_prefix:    str=""):
+                ):
     """
     Responsibility:
 
@@ -1264,10 +1265,6 @@ def _HTML_getVarDL(var:                 Var,
     dl_loc_ls  :    list of two items, location where driving/loading takes place.
                     1) string, file where driver-load connection is made
                     2) string, line number of where driver-load connection is made
-
-    
-    link_path_prefix : string, prefix for the path to linked HTML files
-
     """
 
     # Note xml_element = xe
@@ -1302,8 +1299,7 @@ def _HTML_getVarDL(var:                 Var,
 
         # create hyperlink to file
         html_file = dl_loc_ls[0].replace("//", "/").replace("/", "__")+".html"
-        # html_file = os.path.join(f"{link_path_prefix}", 
-        #                          html_file)
+
         html_id = "#"+dl_loc_ls[1]
         a_var_dl_loc_link_xe.set("href", html_file+html_id)
 
@@ -1322,8 +1318,7 @@ def _HTML_getVarDL(var:                 Var,
 
         # create hyperlink to file
         html_file = dl_loc_ls[0].replace("//", "/").replace("/", "__")+".html"
-        # html_file = os.path.join(f"{link_path_prefix}", 
-        #                          html_file)
+
         html_id = "#"+dl_loc_ls[1]
         a_var_dl_loc_link_xe.set("href", html_file+html_id)
 
@@ -1336,7 +1331,6 @@ def _HTML_createConnectivityTable(
                     module_obj:             ModuleDef, 
                     files_xml_element:      ET.Element, 
                     typetable_xml_element:  ET.Element,
-                    link_path_prefix:       str, 
                     parent_xml_element:     ET.Element,
     ):
     """
@@ -1405,8 +1399,7 @@ def _HTML_createConnectivityTable(
                 
                 var_driver_xml = _HTML_getVarDL(drivers_w_loc[i][0], 
                                                 driving_loc_ls, 
-                                                curr_var_tr_xe, 
-                                                link_path_prefix)
+                                                curr_var_tr_xe)
             
             elif(i == 0 and (var.xml_element.get('localparam') is not None 
                              or var.xml_element.get('parameter') is not None)):
@@ -1418,14 +1411,12 @@ def _HTML_createConnectivityTable(
                 
                 var_driver_xml = _HTML_getVarDL(tmp_const_obj, 
                                                 tmp_const_loc_ls,
-                                                curr_var_tr_xe, 
-                                                link_path_prefix)
+                                                curr_var_tr_xe)
             
             else:
                 var_driver_xml = _HTML_getVarDL(None, 
                                                 ["", ""], 
-                                                curr_var_tr_xe, 
-                                                link_path_prefix)
+                                                curr_var_tr_xe)
 
             if(i < len(loads_w_loc)):
                 loading_loc_ls = elaborateLocs(loads_w_loc[i][1], 
@@ -1433,13 +1424,11 @@ def _HTML_createConnectivityTable(
 
                 var_load_xml = _HTML_getVarDL(loads_w_loc[i][0], 
                                               loading_loc_ls, 
-                                              curr_var_tr_xe,
-                                              link_path_prefix)
+                                              curr_var_tr_xe)
             else:
                 var_load_xml = _HTML_getVarDL(None, 
                                               ["", ""], 
-                                              curr_var_tr_xe,
-                                              link_path_prefix)
+                                              curr_var_tr_xe)
 
             if(i < int(row_span)-1):
                 curr_var_tr_xe = ET.SubElement(parent_xml_element, "tr")
@@ -1489,85 +1478,189 @@ def _HTML_createInstHierHeading(
         if(i < len(ancestral_instances)-1):
             links_inst_hier_header_html_xe.tail = "."
 
-def createModuleConnectivityHTML(                    
+def writeCSSFile(html_fpath_prefix: str) -> str:
+    """
+    Responsibility
+
+    Writes external CSS file used to style the...
+    ...connectivity table
+
+    Returns:
+
+    string, Path to CSS file
+
+    Parameter:
+
+    html_fpath_prefix   :   string, prefix 
+    """
+
+    # some of the css below was adapted from: 
+    # - https://codepen.io/anon/pen/xfjrh
+    # - https://dev.to/dcodeyt/creating-beautiful-html-tables-with-css-428l
+
+    css_text = \
+"""
+h3 {
+    font-family: sans-serif;
+}
+
+a:hover {
+    background-color: #c6f7ed;;
+}
+
+table {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.95em;
+    font-family: sans-serif;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    min-width: 400px;
+    max-width: 100%;
+    position: relative;
+}
+
+thead {
+    -webkit-box-shadow:rgba(0, 0, 0, 0.15) 2px 2px 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+thead tr {
+    background-color: #009879;
+    color: #ffffff;
+    text-align: left;
+}
+
+thead td {
+    vertical-align: middle;
+    font-weight:  bold;
+    padding: 12px 15px;
+}
+
+tbody td {
+    padding: 12px 15px;
+    border-left: 1px solid #dddddd;
+    vertical-align: top;
+}
+
+tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+tbody tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
+
+tbody tr:last-of-type {
+    border-bottom: 2px solid #009879;
+}
+
+tbody tr.active-row {
+    font-weight: bold;
+    color: #009879;
+}
+
+thead {
+    position: sticky;
+    top: 0;
+}
+
+/* Section Animation */
+@import "compass/css3";
+
+:target {
+    -webkit-animation: target-fade 1.5s;
+    -moz-animation: target-fade 1.5s;
+    -o-animation: target-fade 1.5s;
+    animation: target-fade 1.5s;
+}
+
+@-webkit-keyframes target-fade {
+    from {
+    background-color: yellow;
+    }
+
+    to {
+    background-color: transparent;
+    }
+}
+
+@-moz-keyframes target-fade {
+    from {
+    background-color: yellow;
+    }
+
+    to {
+    background-color: transparent;
+    }
+}
+
+@-o-keyframes target-fade {
+    from {
+    background-color: yellow;
+    }
+
+    to {
+    background-color: transparent;
+    }
+}
+
+@keyframes target-fade {
+    from {
+    background-color: yellow;
+    }
+
+    to {
+    background-color: transparent;
+    }
+}
+"""
+
+    file_name = "connectivity_table_styles.css"
+    out_file_path = os.path.join(html_fpath_prefix,
+                                 file_name)
+
+    with open(out_file_path, 'w') as f:
+        f.write(css_text)
+
+    return out_file_path
+
+def writeModuleConnectivityHTML(                    
                     module_obj:             ModuleDef, 
                     files_xml_element:      ET.Element, 
                     typetable_xml_element:  ET.Element, 
-                    link_path_prefix:       str,        
-                    instance_name:          str=""
+                    html_fpath_prefix:      str,        
+                    css_fname:              str,
+                    instance_name:          str="",
     ):
+    """
+    Responsibility:
+
+    Writes HTML file contaning connectivity table
+
+    Parameters:
+
+    module_obj          :   ModuleDef object, contains RTL module information 
+
+    files_xml_element   :   xml.etree.ElementTree.Element object, contains..
+                            ...mapping between file id's and file paths
+
+    typetable_xml_element : xml.etree.ElementTree.Element object, contains..
+                            ...mapping between data type id's and data type properties
+
+    html_fpath_prefix   :   string, path to folder that will hold...
+                            ...html files
+
+    css_fname           :   string, file name for external css file used to...
+                            ...style the html
+    instance_name       :   string, instance name of the given module
+    """
 
     # xe == xml_element
     html_xe = ET.Element("html")
     head_html_xe = ET.SubElement(html_xe, "head")
-    head_style_html_xe = ET.SubElement(head_html_xe, "style")
-    head_style_html_xe.text = \
-    """
-        table,
-        th,
-        td {
-            border: 1px solid black;
-            vertical-align: top;
-        }
-
-        table {
-            width: 75%
-        }
-
-        th,
-        td {
-            padding: 2px;
-        }
-
-        @import "compass/css3";
-
-        /**
-        * Use the :target pseudo-element to apply
-        * styles to the element with the same ID as  
-        * the fragment identifier.
-        * (e.g. `#target-section`)
-        * 
-        * The pseudo-element can also be used in
-        * conjunction with another selector to 
-        * define a variety of target styles.
-        * (e.g. `#target-section:target)
-        */
-
-        :target {
-            -webkit-animation: target-fade 1.5s;
-            -moz-animation: target-fade 1.5s;
-            -o-animation: target-fade 1.5s;
-            animation: target-fade 1.5s;
-        }
-
-
-        /**
-        * Keyframe animation definition
-        * 
-        * 1. Insert a color of your choice here
-        */
-
-        @-webkit-keyframes target-fade {
-            from { background-color: yellow; } /* [1] */
-            to { background-color: transparent; }
-        }
-
-        @-moz-keyframes target-fade {
-            from { background-color: yellow; } /* [1] */
-            to { background-color: transparent; }
-        }
-
-        @-o-keyframes target-fade {
-            from { background-color: yellow; } /* [1] */
-            to { background-color: transparent; }
-        }
-
-        @keyframes target-fade {
-            from { background-color: yellow; } /* [1] */
-            to { background-color: transparent; }
-        }
-    """
-    # some of the code above was copied from: https://codepen.io/anon/pen/xfjrh
+    head_css_link_html_xe = ET.SubElement(head_html_xe, "link")
+    head_css_link_html_xe.set("rel", "stylesheet")
+    head_css_link_html_xe.set("href", css_fname)
 
     HTML_HEADING_TAG = "h3"
 
@@ -1603,40 +1696,40 @@ def createModuleConnectivityHTML(
 
     ### Connectivity Table ###
     table_html_xe = ET.SubElement(body_html_xe, "table")
-    tbody_html_xe = ET.SubElement(table_html_xe, "tbody")
 
     # header row
-    tr_table_header_html_xe = ET.SubElement(tbody_html_xe, "tr")
-    td_tr_table_header_html_xe = ET.SubElement(tr_table_header_html_xe, "td")
-    p_d_tr_table_header_html_xe = ET.SubElement(td_tr_table_header_html_xe, "h4")
-    p_d_tr_table_header_html_xe.text = "Variable Name"
+    thead_html_xe = ET.SubElement(table_html_xe, "thead")
+    tr_thead_html_xe = ET.SubElement(thead_html_xe, "tr")
+    td_tr_table_header_html_xe = ET.SubElement(tr_thead_html_xe, "td")
+    td_tr_table_header_html_xe.text = "Variable Name"
 
-    td_tr_table_header_html_xe = ET.SubElement(tr_table_header_html_xe, "td")
-    p_d_tr_table_header_html_xe = ET.SubElement(td_tr_table_header_html_xe, "h4")
-    p_d_tr_table_header_html_xe.text = "Variable Info"
+    td_tr_table_header_html_xe = ET.SubElement(tr_thead_html_xe, "td")
+    td_tr_table_header_html_xe.text = "Variable Info"
 
-    td_tr_table_header_html_xe = ET.SubElement(tr_table_header_html_xe, "td")
-    p_d_tr_table_header_html_xe = ET.SubElement(td_tr_table_header_html_xe, "h4")
-    p_d_tr_table_header_html_xe.text = "Driver"
+    td_tr_table_header_html_xe = ET.SubElement(tr_thead_html_xe, "td")
+    td_tr_table_header_html_xe.text = "Driver"
 
-    td_tr_table_header_html_xe = ET.SubElement(tr_table_header_html_xe, "td")
-    p_d_tr_table_header_html_xe = ET.SubElement(td_tr_table_header_html_xe, "h4")
-    p_d_tr_table_header_html_xe.text = "Load"
+    td_tr_table_header_html_xe = ET.SubElement(tr_thead_html_xe, "td")
+    td_tr_table_header_html_xe.text = "Load"
+
+    tbody_html_xe = ET.SubElement(table_html_xe, "tbody")
 
     _HTML_createConnectivityTable(module_obj, 
                                 files_xml_element, 
                                 typetable_xml_element, 
-                                link_path_prefix,
                                 tbody_html_xe)
 
     # Write HTML file
     html_xe = ET.ElementTree(html_xe)
     ET.indent(html_xe)
-    out_html_file_path = os.path.join(link_path_prefix, 
+    out_html_file_path = os.path.join(html_fpath_prefix, 
                                       module_obj.getHierPath()+".html")
+    
     html_xe.write(out_html_file_path, method='html', short_empty_elements=False) 
 
-######## MAIN ##########
+###################
+# MAIN 
+###################
 
 parser = argparse.ArgumentParser()
 
@@ -1651,11 +1744,12 @@ design_xml_tree = ET.parse(args.xml_file)
 xml_top_module = None
 xml_submodules = []
 
+# get all xml tag elements of type module
 for module in design_xml_tree.findall("./netlist/module"):
     if(module.get('topModule') == "1"):
 
         if(xml_top_module is not None):
-            raise Exception(f"There appear to be multiple topModules." \
+            raise Exception(f"There appear to be multiple top Modules." \
             + f" '{xml_top_module.get('name')}' appears to be the second")
         else:
             xml_top_module = module
@@ -1663,25 +1757,32 @@ for module in design_xml_tree.findall("./netlist/module"):
     else:
         xml_submodules.append(module)
 
+# create object model of design
 top_module = ModuleDef(xml_top_module, xml_submodules, None)
 
+# print stats
 print("Top Module name:", top_module.xml_element.get('name'))
-
-all_vars = top_module.getAllVars()
-
-print("Num of vars:", len(all_vars))
-
 print()
 
-all_instances = top_module.getAllInstances()
+all_vars = top_module.getAllVars()
+print("Num of vars:", len(all_vars))
 
+all_instances = top_module.getAllInstances()
 print("Num of Instances:", len(all_instances))
+
+###################
+# HTML CREATION 
+###################
 
 files_xml_element = design_xml_tree.find("files")
 typetable_xml_element = design_xml_tree.find("netlist/typetable")
 
-createModuleConnectivityHTML(top_module, files_xml_element, typetable_xml_element, "html_files/", "")
+html_folder = "html_files/"
+css_fpath = writeCSSFile(html_folder)
+css_fname = css_fpath.split("/")[-1]
+
+writeModuleConnectivityHTML(top_module, files_xml_element, typetable_xml_element, html_folder, css_fname,"")
 
 for instance in all_instances:
-    createModuleConnectivityHTML(instance.module_def, files_xml_element, typetable_xml_element, 
-                             "html_files/", instance.xml_element.get('name'))
+    writeModuleConnectivityHTML(instance.module_def, files_xml_element, typetable_xml_element, 
+                             html_folder, css_fname, instance.xml_element.get('name'))
