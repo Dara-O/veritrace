@@ -1,9 +1,19 @@
 import argparse
 import xml.etree.ElementTree as ET
 import os
+import threading
+
+from create_RTL_HTML import create_RTL_HTML
 
 # FIXME: finish create_rtl_html.py
 # FIXME: Fix all FIXME's (ctrl+f)
+
+# Notes:
+#   - connectivity html filename format: [folder_name][/]<instance_hier>.html
+#       - <instance_hier> has instance names separated by dots '.' 
+#   - RTL HTML File format: [folder_name][/]<module_name>.v.html
+#   - God willing, design tree file format: [folder_name][/]design_tree.html
+#       - Add a link to the RTL HTML in parentheses, after the link to the connectivity table
 
 def elaborateLocs(loc_str :str, files_xml_element: ET.Element) -> str:
     """
@@ -1372,7 +1382,7 @@ def _HTML_createConnectivityTable(
         
         # format location info text
         # "filepath, row_num:col_num"
-        loc_info_txt = loc_info_ls[0]+", " + ":".join(loc_info_ls[1:])
+        loc_info_txt = loc_info_ls[0].replace("//", "/")+", " + ":".join(loc_info_ls[1:])
 
         var_info_dict["loc"] = loc_info_txt
 
@@ -1631,11 +1641,15 @@ def writeModuleConnectivityHTML(
                     html_fpath_prefix:      str,        
                     css_fname:              str,
                     instance_name:          str="",
-    ):
+    ) -> str:
     """
     Responsibility:
 
     Writes HTML file contaning connectivity table
+
+    Returns:
+
+    string, filepath of the written HTML file
 
     Parameters:
 
@@ -1725,20 +1739,49 @@ def writeModuleConnectivityHTML(
     out_html_file_path = os.path.join(html_fpath_prefix, 
                                       module_obj.getHierPath()+".html")
     
-    html_xe.write(out_html_file_path, method='html', short_empty_elements=False) 
+    html_xe.write(out_html_file_path, method='html', short_empty_elements=False)
+
+    return out_html_file_path
 
 ###################
 # MAIN 
 ###################
 
+# >>>>>>>>>>
+# ARGS 
+# >>>>>>>>>>
+
 parser = argparse.ArgumentParser()
 
-parser.add_argument("xml_file", help="XML file to be parsed")
+parser.add_argument("xml_file", 
+                    help="XML file to be parsed")
+parser.add_argument("out_dir", 
+                    help="Directory in which HTML files will be dumped")
+parser.add_argument("-m", action="store_true",  default=False, dest="multithread_enabled", 
+                    help="If specified, will launch 3 threads"+\
+                         " to parallellize the creation of connitivity html"+\
+                         " files, verilog html files, and index html file.")
 
 args = parser.parse_args()
+# <<<<<<<<<<<<
+# ARGS 
+# <<<<<<<<<<<<
 
 # creating XML tree
 design_xml_tree = ET.parse(args.xml_file)
+
+# get files
+files = design_xml_tree.findall("./module_files/file")
+files = list(map(lambda xe: xe.get("filename").replace("//", "/"), files))
+
+# create HTML files
+if(args.multithread_enabled):
+    thread_rtl_html = threading.Thread(target=create_RTL_HTML, args=(files, args.out_dir))
+    thread_rtl_html.start()
+else:
+    create_RTL_HTML(files, args.out_dir)
+
+
 
 # get top module
 xml_top_module = None
@@ -1760,6 +1803,8 @@ for module in design_xml_tree.findall("./netlist/module"):
 # create object model of design
 top_module = ModuleDef(xml_top_module, xml_submodules, None)
 
+# FIXME: Create index.html
+
 # print stats
 print("Top Module name:", top_module.xml_element.get('name'))
 print()
@@ -1770,19 +1815,36 @@ print("Num of vars:", len(all_vars))
 all_instances = top_module.getAllInstances()
 print("Num of Instances:", len(all_instances))
 
-###################
+# >>>>>>>>>>>>>>>>
 # HTML CREATION 
-###################
+# >>>>>>>>>>>>>>>>
 
 files_xml_element = design_xml_tree.find("files")
 typetable_xml_element = design_xml_tree.find("netlist/typetable")
 
-html_folder = "html_files/"
+html_folder = args.out_dir
 css_fpath = writeCSSFile(html_folder)
-css_fname = css_fpath.split("/")[-1]
+css_fname = os.path.basename(css_fpath)
 
-writeModuleConnectivityHTML(top_module, files_xml_element, typetable_xml_element, html_folder, css_fname,"")
+top_module_html_fpath = writeModuleConnectivityHTML(top_module, 
+                                                    files_xml_element, 
+                                                    typetable_xml_element, 
+                                                    html_folder, css_fname,"")
 
 for instance in all_instances:
     writeModuleConnectivityHTML(instance.module_def, files_xml_element, typetable_xml_element, 
                              html_folder, css_fname, instance.xml_element.get('name'))
+
+
+# <<<<<<<<<<<<<<<<
+# HTML CREATION 
+# <<<<<<<<<<<<<<<<
+
+print()
+
+
+if(args.multithread_enabled):
+    thread_rtl_html.join()
+    #FIXME: join index.html generator also
+    
+print(f"Root connectivity table: {top_module_html_fpath}")
