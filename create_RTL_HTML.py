@@ -187,10 +187,10 @@ def _reRepl_replaceRTL(match_obj: re.Match, init: bool=False) -> str:
     _reRepl_replaceRTL.VERILOG_KEYWORDS =  "(\\b"+_reRepl_replaceRTL.VERILOG_KEYWORDS + "\\b)"
 
     _reRepl_replaceRTL.VERILOG_OPERATORS = [
-        "\(", "\)", "\|", "\[", "\]", "{", "}", "&lt;", "&gt;", "-", "&amp;", "=", "==", "===", "!=", "!==", ",", ";", ":", "/"
+        "\(", "\)", "\|", "\[", "\]", "{", "}", "&lt;", "&gt;", "-", "&amp;", "=", "==", "===", "!=", "!==", ",", ";", ":", "/", "~"
         ]
     _reRepl_replaceRTL.VERILOG_OPERATORS = "|".join(_reRepl_replaceRTL.VERILOG_OPERATORS)
-    _reRepl_replaceRTL.VERILOG_OPERATORS = "(\\b" + _reRepl_replaceRTL.VERILOG_OPERATORS + "\\b)"
+    _reRepl_replaceRTL.VERILOG_OPERATORS = "("+_reRepl_replaceRTL.VERILOG_OPERATORS + ")"
 
 
     # WARNING: The class names below must match class names in...
@@ -329,27 +329,45 @@ def writeRTL_HTML(rtl_file_path: str, html_file_path: str, css_file_path: str):
 
     return html_file_path
 
+def create_RTL_HTML(rtl_files: list[str], out_dir: str):
+    """
+    Responsibility:
+
+    Create a series of HTML pages containing RTL code
+
+    Parameters:
+
+    rtl_files   :   list of strings, strings are paths to rtl files
+    
+    out_dir     :   string, Path to a directory that will contain...
+                    ...the output files
+    """
+
+    css_file_path = writeCSSFile(out_dir)
+
+    for rtl_file in rtl_files:
+        # convert '/' to _ and remove extension from filename 
+        rtl_file_name = rtl_file.replace("/", "__").split(".")[:-1]
+        rtl_file_name = ".".join(rtl_file_name)
+
+        html_file_path = os.path.join(out_dir, rtl_file_name) + ".v.html"
+
+        writeRTL_HTML(rtl_file, html_file_path, css_file_path)    
+
 ###################
 # MAIN
 ###################
 
-parser = argparse.ArgumentParser(description="Create a series of HTML pages containing RTL code")
+if(__name__ == "__main__"):
+    parser = argparse.ArgumentParser(description="Create a series of HTML pages containing RTL code")
 
-parser.add_argument("rtl_files", nargs='+', metavar="<file>.v", help="Path to verilog files.")
-parser.add_argument("out_dir", metavar="dir_name", 
-                    help="Path to a directory that will contain the output files")
+    parser.add_argument("rtl_files", nargs='+', metavar="<file>.v", 
+                        help="Path to verilog files.")
+    parser.add_argument("out_dir", metavar="dir_name", 
+                        help="Path to a directory that will contain the output files")
 
-args = parser.parse_args()
+    args = parser.parse_args()
 
-print(f"Number of Verilog files: {len(args.rtl_files)}")
+    print(f"Number of Verilog files: {len(args.rtl_files)}")
 
-# write css file
-css_file_path = writeCSSFile(args.out_dir)
-
-for rtl_file in args.rtl_files:
-    rtl_file_name = os.path.basename(rtl_file).split(".")[:-1]
-    rtl_file_name = ".".join(rtl_file_name)
-
-    html_file_path = os.path.join(args.out_dir, rtl_file_name) + ".v.html"
-
-    writeRTL_HTML(rtl_file, html_file_path, css_file_path)
+    create_RTL_HTML(args.rtl_files, args.out_dir)
