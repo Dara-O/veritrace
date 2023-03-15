@@ -3,17 +3,15 @@ import xml.etree.ElementTree as ET
 import os
 import threading
 
-from create_RTL_HTML import create_RTL_HTML
+from create_RTL_HTML    import create_RTL_HTML
+from create_index_html  import writeIndex
 
-# FIXME: finish create_rtl_html.py
-# FIXME: Fix all FIXME's (ctrl+f)
 
 # Notes:
 #   - connectivity html filename format: [folder_name][/]<instance_hier>.html
 #       - <instance_hier> has instance names separated by dots '.' 
 #   - RTL HTML File format: [folder_name][/]<module_name>.v.html
-#   - God willing, design tree file format: [folder_name][/]design_tree.html
-#       - Add a link to the RTL HTML in parentheses, after the link to the connectivity table
+#   - Design tree file format: [folder_name][/]index.html
 
 def elaborateLocs(loc_str :str, files_xml_element: ET.Element) -> str:
     """
@@ -888,7 +886,7 @@ class ModuleDef():
         out = []
 
         for xml_instance in xml_element.iter("instance"):
-            # FIXME: consider multithreading
+        
             out.append(ModuleInstance(xml_instance, xml_modules, self, root))
 
         return out
@@ -1234,6 +1232,16 @@ def _HTML_getVarInfo(var_info_dict: dict,
     Returns 
     
     String, a <td> htm tag with the variable name
+
+    Parameters:
+
+    var_info_dict   :   dict, contains fields and values to...
+                        be displayed in the Variable Info column. 
+                        keys    -> string
+                        values  -> string
+                        
+                        Note:
+                        Expected keys include "type", "dim" and "loc"
     """
     # Note xml_element = xe
     td_xml_element = ET.SubElement(parent_xml_element, 'td')
@@ -1243,8 +1251,21 @@ def _HTML_getVarInfo(var_info_dict: dict,
         p_xml_element = ET.SubElement(td_xml_element, "p")
         strong_xe = ET.SubElement(p_xml_element, "strong")
         strong_xe.text = key
+        
+        # add link to variable declaration in RTL HTML
+        if(key == "loc"):
+            strong_xe.tail = ": "
 
-        strong_xe.tail = f": {value}"
+            a_xe = ET.SubElement(p_xml_element, "a")
+        
+            loc_parts = value.replace("/", "__").split(", ")
+            rtl_html_fname = loc_parts[0]
+            rtl_line_number = loc_parts[1].split(":")[0].strip()
+            rtl_html_link = rtl_html_fname+".html"+"#"+str(rtl_line_number)
+            a_xe.set("href", rtl_html_link)
+            a_xe.text = str(value)
+        else:
+            strong_xe.tail = f": {value}"
 
 
     if(misc_text != ""):
@@ -1350,8 +1371,17 @@ def _HTML_createConnectivityTable(
 
     Parameters:
 
-    module_obj  :   FIXME
-    instance_name   :   FIXME
+    module_obj              :   ModuleDef Object containing information regarding...
+                                ...RTL module and variable connectivity
+    
+    files_xml_element       :   xml.etree.ElementTree object, containing mapping...
+                                ...between file IDs and file paths
+
+    typetable_xml_element   :   xml.etree.ElementTree object, containing mapping...
+                                ...between datatype IDs and data type properties
+    
+    parent_xml_element      :   xml.etree.ElementTree object, used to create Subelements...
+                                ...of higher level elements like HTML tables
     """
 
     vars = module_obj.vars
@@ -1386,11 +1416,10 @@ def _HTML_createConnectivityTable(
 
         var_info_dict["loc"] = loc_info_txt
 
-        # FIXME (low priority) Conditions should be more stringent
         if(var.xml_element.get('localparam') != None):
             var_info_dict["type"] += ", localparam"
         if(var.xml_element.get('param') != None):
-            var_info_dict["type"] += ", param"
+            var_info_dict["type"] += ", parameter"
         if(var.xml_element.get('dir') != None):
             var_info_dict["type"] += f", {var.xml_element.get('dir')}"
 
@@ -1641,6 +1670,7 @@ def writeModuleConnectivityHTML(
                     html_fpath_prefix:      str,        
                     css_fname:              str,
                     instance_name:          str="",
+                    index_html_file_name:   str="index.html"
     ) -> str:
     """
     Responsibility:
@@ -1667,6 +1697,9 @@ def writeModuleConnectivityHTML(
     css_fname           :   string, file name for external css file used to...
                             ...style the html
     instance_name       :   string, instance name of the given module
+
+    index_html_file_name:   string, file name to be used when linking connectivity...
+                            ...table to design hierarchy index
     """
 
     # xe == xml_element
@@ -1704,7 +1737,7 @@ def writeModuleConnectivityHTML(
     nb_module_header_html_xe.set("style", "font-weight:normal")
     nb_module_header_html_xe.text = module_obj.xml_element.get('name')
 
-    # ### Instance Hierarchy header ###
+    ### Instance Hierarchy header ###
     _HTML_createInstHierHeading(body_html_xe, HTML_HEADING_TAG, module_obj.getHierPath())
 
 
@@ -1733,6 +1766,13 @@ def writeModuleConnectivityHTML(
                                 typetable_xml_element, 
                                 tbody_html_xe)
 
+
+    # lik to design Hierarchy Index
+    p_html_xe = ET.SubElement(html_xe, "p")
+    a_p_html_xe = ET.SubElement(p_html_xe, "a")
+    a_p_html_xe.set("href", index_html_file_name)
+    a_p_html_xe.text = "Design Hierarchy Index"
+
     # Write HTML file
     html_xe = ET.ElementTree(html_xe)
     ET.indent(html_xe)
@@ -1751,21 +1791,52 @@ def writeModuleConnectivityHTML(
 # ARGS 
 # >>>>>>>>>>
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(
+    description=\
+"""
+    Creates three kinds of HTML webpages to aid in exploring an RTL design.
+
+    1) Desin Hierarchy Index:           This contains a tree view of instances in the design, 
+                                        with links to each instance's connectivity table.
+
+    2) Instance Connectivity Table:     This contains a table of all a modules's variables, 
+                                        along with their drivers and loads. The connectivity 
+                                        of variables (regs, wires, etc) across the design can be traced 
+                                        by following the links provided in the connectivity table.
+                                
+    3) RTL:                             This contains the (system)verilog statements used to describe the design.
+""",
+    formatter_class=argparse.RawDescriptionHelpFormatter and argparse.RawTextHelpFormatter
+
+)
 
 parser.add_argument("xml_file", 
-                    help="XML file to be parsed")
+                    help="XML file to be parsed\n"+
+                    "**Note:** \nTo create this file PLEASE use Verilator with the following\n"+ \
+                            "flags (in addtion to the paths to your design files and other flags)\n\n"+ \
+                            "\t'-Wno-fatal --timing --fno-dfg --fno-dedup --fno-combine --fno-assemble \n" + \
+                            "\t--fno-reorder --fno-expand --fno-subst --fno-merge-const-pool\n"+ \
+                            "\t--xml-only --xml-output <design_xml_filename>.xml'\n\n"+ \
+                            "Relpace '<design_xml_filename>' with the filename for the output xml file\n"+ \
+                            "Tested with Verilator 5.003.\n ")
+
 parser.add_argument("out_dir", 
-                    help="Directory in which HTML files will be dumped")
+                    help="Directory in which HTML (and other) files will be placed")
 parser.add_argument("-m", action="store_true",  default=False, dest="multithread_enabled", 
                     help="If specified, will launch 3 threads"+\
                          " to parallellize the creation of connitivity html"+\
-                         " files, verilog html files, and index html file.")
+                         " files, verilog html files, and index html files.")
 
 args = parser.parse_args()
+
 # <<<<<<<<<<<<
 # ARGS 
 # <<<<<<<<<<<<
+
+# ensure out_dir exists
+if(not os.path.exists(args.out_dir)):
+    print(f"Path '{args.out_dir}' does not exist.")
+    exit(1)
 
 # creating XML tree
 design_xml_tree = ET.parse(args.xml_file)
@@ -1774,14 +1845,14 @@ design_xml_tree = ET.parse(args.xml_file)
 files = design_xml_tree.findall("./module_files/file")
 files = list(map(lambda xe: xe.get("filename").replace("//", "/"), files))
 
-# create HTML files
+# >>>>>>>>>>>>>>>>>
+### create rtl HTML & CSS files ###
 if(args.multithread_enabled):
     thread_rtl_html = threading.Thread(target=create_RTL_HTML, args=(files, args.out_dir))
     thread_rtl_html.start()
 else:
     create_RTL_HTML(files, args.out_dir)
-
-
+# <<<<<<<<<<<<<<<<<
 
 # get top module
 xml_top_module = None
@@ -1800,20 +1871,58 @@ for module in design_xml_tree.findall("./netlist/module"):
     else:
         xml_submodules.append(module)
 
-# create object model of design
+### create object model of design ###
 top_module = ModuleDef(xml_top_module, xml_submodules, None)
 
-# FIXME: Create index.html
+
 
 # print stats
 print("Top Module name:", top_module.xml_element.get('name'))
 print()
 
 all_vars = top_module.getAllVars()
-print("Num of vars:", len(all_vars))
+print("Number of vars:", len(all_vars))
 
 all_instances = top_module.getAllInstances()
-print("Num of Instances:", len(all_instances))
+print("Number of Instances:", len(all_instances), "\n")
+
+# create a formatted list of instance hierarchies
+instances_str = top_module.getHierPath() + f" ({top_module.xml_element.get('name')})" '\n' 
+instances_ls  = [instances_str] + \
+                list(map(
+                    lambda s: s.getHierPath() + f" ({s.xml_element.get('defName')})", 
+                    all_instances
+                ))
+
+
+# >>>>>>>>>>>>>>>>>
+### create index HTML & CSS files ###
+index_html_file_name = "index.html"
+
+if(args.multithread_enabled):
+    thread_index_html = threading.Thread(target=writeIndex, args=(args.out_dir, instances_ls, index_html_file_name))
+    thread_index_html.start()
+else:
+    create_RTL_HTML(files, args.out_dir)
+# <<<<<<<<<<<<<<<<<
+
+
+# write out all instances to a file
+instances_file_name = "instances.txt"
+instances_fpath = os.path.join(args.out_dir, instances_file_name)
+with open(instances_fpath, "w") as f:
+    f.write("\n".join(instances_ls))
+
+print(f"All instance hierarchical paths & module names dumped to '{instances_fpath}'")
+
+# write out all vars to a file
+vars_file_name = "vars.txt"
+vars_str = "\n".join(list(map(lambda v : v.getHierPath(), all_vars)))
+vars_fpath = os.path.join(args.out_dir, vars_file_name)
+with open(vars_fpath, "w") as f:
+    f.write(vars_str)
+
+print(f"All hierarchical paths for variables (i.e. regs/wires/localparams) dumped to '{instances_fpath}'")
 
 # >>>>>>>>>>>>>>>>
 # HTML CREATION 
@@ -1829,22 +1938,19 @@ css_fname = os.path.basename(css_fpath)
 top_module_html_fpath = writeModuleConnectivityHTML(top_module, 
                                                     files_xml_element, 
                                                     typetable_xml_element, 
-                                                    html_folder, css_fname,"")
+                                                    html_folder, css_fname,"", index_html_file_name)
 
 for instance in all_instances:
     writeModuleConnectivityHTML(instance.module_def, files_xml_element, typetable_xml_element, 
-                             html_folder, css_fname, instance.xml_element.get('name'))
-
+                             html_folder, css_fname, instance.xml_element.get('name'), index_html_file_name)
 
 # <<<<<<<<<<<<<<<<
 # HTML CREATION 
 # <<<<<<<<<<<<<<<<
 
-print()
-
-
 if(args.multithread_enabled):
     thread_rtl_html.join()
-    #FIXME: join index.html generator also
+    thread_index_html.join()
     
-print(f"Root connectivity table: {top_module_html_fpath}")
+print(f"\nRoot connectivity table: {top_module_html_fpath}")
+print(f"Design Hierarchy Index: {os.path.join(args.out_dir, index_html_file_name)}")
