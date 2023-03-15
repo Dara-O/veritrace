@@ -31,6 +31,9 @@ def writeCSSFile(out_dir: str) -> str:
     # ...in '_reRepl_replaceRTL' function
     css_text = \
 """
+body {
+    background-color: #fafafa;
+}
 .hljs-comment {
   color: blue;
 }
