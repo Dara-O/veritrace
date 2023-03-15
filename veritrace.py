@@ -1887,7 +1887,7 @@ all_instances = top_module.getAllInstances()
 print("Number of Instances:", len(all_instances), "\n")
 
 # create a formatted list of instance hierarchies
-instances_str = top_module.getHierPath() + f" ({top_module.xml_element.get('name')})" '\n' 
+instances_str = top_module.getHierPath() + f" ({top_module.xml_element.get('name')})" 
 instances_ls  = [instances_str] + \
                 list(map(
                     lambda s: s.getHierPath() + f" ({s.xml_element.get('defName')})", 
@@ -1922,7 +1922,7 @@ vars_fpath = os.path.join(args.out_dir, vars_file_name)
 with open(vars_fpath, "w") as f:
     f.write(vars_str)
 
-print(f"All hierarchical paths for variables (i.e. regs/wires/localparams) dumped to '{instances_fpath}'")
+print(f"All hierarchical paths for variables (i.e. regs/wires/localparams) dumped to '{vars_fpath}'")
 
 # >>>>>>>>>>>>>>>>
 # HTML CREATION 
