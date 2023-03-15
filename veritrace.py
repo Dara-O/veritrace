@@ -633,8 +633,14 @@ class ModuleInstance():
         
         # convert connection names to variable objects
         for port_connection_name in port_connection_names:
+            
+            # skip loads that are consts
+            if(ModuleDef.nameContainsConstIndicators(port_connection_name)):
+                continue
+            
             var_obj = self.parent_obj.findVar("."+port_connection_name)
-
+            
+            
             # check that only vars are connected to the output port
             if(var_obj.xml_element.tag != "var"):
                 raise Exception(f"'{port_name}' is connected to an entity that isn't a var. That entity's"\
@@ -1813,7 +1819,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument("xml_file", 
                     help="XML file to be parsed\n"+
                     "**Note:** \nTo create this file PLEASE use Verilator with the following\n"+ \
-                            "flags (in addtion to the paths to your design files and other flags)\n\n"+ \
+                            "flags (in addtion to the paths for your design files and other flags)\n\n"+ \
                             "\t'-Wno-fatal --timing --fno-dfg --fno-dedup --fno-combine --fno-assemble \n" + \
                             "\t--fno-reorder --fno-expand --fno-subst --fno-merge-const-pool\n"+ \
                             "\t--xml-only --xml-output <design_xml_filename>.xml'\n\n"+ \
