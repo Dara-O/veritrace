@@ -2,6 +2,7 @@ import argparse
 import xml.etree.ElementTree as ET
 import os
 import threading
+from multiprocessing import Pool
 
 from create_RTL_HTML    import create_RTL_HTML
 from create_index_html  import writeIndex
@@ -1800,14 +1801,14 @@ def writeModuleConnectivityHTML(
 parser = argparse.ArgumentParser(
     description=\
 """
-    Creates three kinds of HTML webpages to aid in exploring an RTL design.
+Enables design exploration and static signal tracing using three types of HTML webpages.
 
     1) Desin Hierarchy Index:           This contains a tree view of instances in the design, 
                                         with links to each instance's connectivity table.
 
-    2) Instance Connectivity Table:     This contains a table of all a modules's variables, 
-                                        along with their drivers and loads. The connectivity 
-                                        of variables (regs, wires, etc) across the design can be traced 
+    2) Instance Connectivity Table:     This contains a table with all the variables (wires, regs, etc.) 
+                                        in a module, along with their drivers and loads. The connectivity 
+                                        of these variables/signals can be traced throughout the design 
                                         by following the links provided in the connectivity table.
                                 
     3) RTL:                             This contains the (system)verilog statements used to describe the design.
@@ -1819,7 +1820,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument("xml_file", 
                     help="XML file to be parsed\n"+
                     "**Note:** \nTo create this file PLEASE use Verilator with the following\n"+ \
-                            "flags (in addtion to the paths for your design files and other flags)\n\n"+ \
+                            "flags (in addtion to other flags and the paths for your design files)\n\n"+ \
                             "\t'-Wno-fatal --timing --fno-dfg --fno-dedup --fno-combine --fno-assemble \n" + \
                             "\t--fno-reorder --fno-expand --fno-subst --fno-merge-const-pool\n"+ \
                             "\t--xml-only --xml-output <design_xml_filename>.xml'\n\n"+ \
@@ -1829,15 +1830,18 @@ parser.add_argument("xml_file",
 parser.add_argument("out_dir", 
                     help="Directory in which HTML (and other) files will be placed")
 parser.add_argument("-m", action="store_true",  default=False, dest="multithread_enabled", 
-                    help="If specified, will launch 3 threads"+\
-                         " to parallellize the creation of connitivity html"+\
+                    help="If specified, will launch 2 additional threads"+\
+                         " to parallellize the creation of connectivity html"+\
                          " files, verilog html files, and index html files.")
+
+parser.add_argument("-j", type=int, dest="num_extra_threads", metavar="<num_threads>", default=0,
+                    help="Specifies the number of threads to be used when writing the connectivity"+ \
+                         " HTML file for each instance in the design. \nKeep in mind that the if"+ \
+                         " the '-m' option is also specified, two additional threads will be spawned to create"+\
+                         " the RTL HTML and the index HTML files")
 
 args = parser.parse_args()
 
-# <<<<<<<<<<<<
-# ARGS 
-# <<<<<<<<<<<<
 
 # ensure out_dir exists
 if(not os.path.exists(args.out_dir)):
@@ -1946,13 +1950,19 @@ top_module_html_fpath = writeModuleConnectivityHTML(top_module,
                                                     typetable_xml_element, 
                                                     html_folder, css_fname,"", index_html_file_name)
 
-for instance in all_instances:
-    writeModuleConnectivityHTML(instance.module_def, files_xml_element, typetable_xml_element, 
-                             html_folder, css_fname, instance.xml_element.get('name'), index_html_file_name)
+if(args.num_extra_threads > 0):
+    def pool_target(instance):
+        writeModuleConnectivityHTML(instance.module_def, files_xml_element, typetable_xml_element, 
+                                html_folder, css_fname, instance.xml_element.get('name'), index_html_file_name)
 
-# <<<<<<<<<<<<<<<<
-# HTML CREATION 
-# <<<<<<<<<<<<<<<<
+    with Pool(args.num_extra_threads) as pool:
+        result = pool.map(pool_target, all_instances, chunksize=20)
+else:
+    for instance in all_instances:
+        writeModuleConnectivityHTML(instance.module_def, files_xml_element, typetable_xml_element, 
+                                html_folder, css_fname, instance.xml_element.get('name'), index_html_file_name)
+
+
 
 if(args.multithread_enabled):
     thread_rtl_html.join()
