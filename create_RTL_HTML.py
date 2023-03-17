@@ -1,4 +1,5 @@
 import os 
+import sys
 import re
 import argparse
 import xml.etree.ElementTree as ET
@@ -296,8 +297,14 @@ def writeRTL_HTML(rtl_file_path: str, html_file_path: str, css_file_path: str):
 
     # read rtl file 
     rtl_file_txt = ""
-    with open(rtl_file_path, "r") as f:
-        rtl_file_txt = f.read()
+    try:
+        with open(rtl_file_path, "r") as f:
+            rtl_file_txt = f.read()
+    except FileNotFoundError as e:
+        print("="*8)
+        print(f"ERROR: RTL filepath '{rtl_file_path}' not found. Its RTL HTML file will not be generated.", file=sys.stderr)
+        print("="*8)
+        return
 
     # create html file
     html_xe = ET.Element("html")
