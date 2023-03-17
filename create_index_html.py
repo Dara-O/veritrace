@@ -2,10 +2,12 @@ import os
 import argparse
 import xml.etree.ElementTree as ET
 
-# ATTRIBUTIONS
-# https://iamkate.com/code/tree-views/
+# Notes:
+#   - connectivity html filename format: [folder_name][/]<instance_hier>.html
+#       - <instance_hier> has instance names separated by dots '.' 
+#   - Index html filename format: [folder_name][/]index.html
 
-# forward declaration
+# forward declaration for type-hints
 class Node:
     pass
 
@@ -80,7 +82,9 @@ class DesignTree:
         return current_node
 
 def writeCSS(file_path: str):
-    
+    # Some of the CSS code below was inspired by:
+    # https://iamkate.com/code/tree-views/
+
     out_str = \
 """
 #banner {

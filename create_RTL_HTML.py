@@ -3,6 +3,9 @@ import re
 import argparse
 import xml.etree.ElementTree as ET
 
+# Notes:
+#   - RTL HTML File format: [folder_name][/]<module_name>.v.html
+
 ###################
 # FUNCTIONS
 ###################

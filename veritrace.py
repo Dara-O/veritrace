@@ -7,7 +7,6 @@ from multiprocessing import Pool
 from create_RTL_HTML    import create_RTL_HTML
 from create_index_html  import writeIndex
 
-
 # Notes:
 #   - connectivity html filename format: [folder_name][/]<instance_hier>.html
 #       - <instance_hier> has instance names separated by dots '.' 
@@ -79,7 +78,7 @@ def elaborateDtypeId(dtype_id: str, typetable_xml_element: ET.Element) -> dict:
                 Eg: "2"
 
     typetable_xml_element  :    an xml.etree.ElementTree.Element object containing...
-                                ...mapping between dtpye_ids and typtable ids.
+                                ...mapping between dtype_ids and typetable ids.
                                 Gotten from the xml produced by Verilator
 
     """
@@ -118,7 +117,7 @@ class ConstLiteral():
     """
     Represents:
 
-    Contant value typically used to tieoff ports
+    Constant value typically used to tie-off ports
     """
 
     def __init__(self, xml_element, parent_obj, root):
@@ -198,7 +197,7 @@ class Var():
 
 class ConstVar(Var):
     """
-    Represtents 
+    Represents 
     
     A constant value typically used to drive vars like local params.
     This type of Const Var is found in assignments
@@ -221,7 +220,8 @@ class ConstVar(Var):
 
 class Assign():
     """
-    Represents assignments made in modules. There can be three types of assigns:
+    Represents:
+    Assignments made in modules. There can be three types of assigns:
         - assign
         - assigndly
         - contassign
@@ -457,7 +457,9 @@ class InstancePort():
 
 class ModuleInstance():
     """
-    Represent a module instatiation
+    Represent 
+    
+    An instantiated module
     """
 
     def __init__(self, xml_element, xml_modules, parent_obj, root):
@@ -764,7 +766,8 @@ class ModuleInstance():
 
 class ModuleDef():
     """
-    Represent a module definition
+    Represent 
+    A module definition
     """
 
     __CONST_INDICATOR_1 = "&apos"
@@ -1387,7 +1390,7 @@ def _HTML_createConnectivityTable(
     typetable_xml_element   :   xml.etree.ElementTree object, containing mapping...
                                 ...between datatype IDs and data type properties
     
-    parent_xml_element      :   xml.etree.ElementTree object, used to create Subelements...
+    parent_xml_element      :   xml.etree.ElementTree object, used to create SubElements...
                                 ...of higher level elements like HTML tables
     """
 
@@ -1682,7 +1685,7 @@ def writeModuleConnectivityHTML(
     """
     Responsibility:
 
-    Writes HTML file contaning connectivity table
+    Writes HTML file containing connectivity table
 
     Returns:
 
@@ -1803,7 +1806,7 @@ parser = argparse.ArgumentParser(
 """
 Enables design exploration and static signal tracing using three types of HTML webpages.
 
-    1) Desin Hierarchy Index:           This contains a tree view of instances in the design, 
+    1) Design Hierarchy Index:          This contains a tree view of instances in the design, 
                                         with links to each instance's connectivity table.
 
     2) Instance Connectivity Table:     This contains a table with all the variables (wires, regs, etc.) 
