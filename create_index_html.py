@@ -244,6 +244,7 @@ def writeIndexHTML(file_path: str, design_tree: DesignTree, css_filename: str):
     connectivity_table_html_link = top_instance_name + ".html"
     a_ts_html_xe = ET.SubElement(top_summary_html_xe, "a")
     a_ts_html_xe.set("href", connectivity_table_html_link)
+    a_ts_html_xe.set("target", "_blank")
     a_ts_html_xe.text = top_instance_name + " " +\
                         design_tree.top_module.node_info_dict["module_name"]
 
@@ -263,6 +264,7 @@ def writeIndexHTML(file_path: str, design_tree: DesignTree, css_filename: str):
             if(len(node.children) == 0):
                 a_ts_html_xe = ET.SubElement(li_html_xe, "a")
                 a_ts_html_xe.set("href", connectivity_table_html_link)
+                a_ts_html_xe.set("target", "_blank")
                 a_ts_html_xe.text = child_name + " " + \
                                     node.node_info_dict["module_name"]
                 
