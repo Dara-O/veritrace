@@ -1,0 +1,217 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="index_style.css">
+    <title>Design Hierarchy Index</title>
+  </head>
+  <body>
+    <div id="banner">
+      <h3>Design Hierarchy Index</h3>
+      <pre>Usage:
+- Each entry shows '&lt;instance_name&gt; (&lt;module_name&gt;)'. The &lt;module_name&gt; may be parametrized
+- Each link leads to the connectivity table for that instance
+- Refresh the page to collapse all levels.
+- A link to this index can be found at the bottom of the connectivity table.</pre>
+    </div>
+    <ul class="tree">
+      <li>
+        <details>
+          <summary>
+            <a href="instruction_cache.html" target="_blank">instruction_cache (instruction_cache)</a>
+          </summary>
+          <ul>
+            <li>
+              <a href="instruction_cache.html" target="_blank">ics1_restart_m (ics1_restart)</a>
+            </li>
+          </ul>
+          <ul>
+            <li>
+              <a href="instruction_cache.html" target="_blank">sa_w_arb_m (sa_w_arb)</a>
+            </li>
+          </ul>
+          <ul>
+            <li>
+              <details>
+                <summary>
+                  <a href="instruction_cache.icache_stage1_m.html">icache_stage1_m (icache_stage1)</a>
+                </summary>
+                <ul>
+                  <li>
+                    <a href="instruction_cache.dac.html" target="_blank">metadata_ff (register__W11)</a>
+                  </li>
+                </ul>
+                <ul>
+                  <li>
+                    <details>
+                      <summary>
+                        <a href="instruction_cache.icache_stage1_m.status_array_wrapper_m.html">status_array_wrapper_m (status_array_wrapper)</a>
+                      </summary>
+                      <ul>
+                        <li>
+                          <details>
+                            <summary>
+                              <a href="instruction_cache.icache_stage1_m.status_array_wrapper_m.sa_initializer.html">sa_initializer (status_array_initializer)</a>
+                            </summary>
+                            <ul>
+                              <li>
+                                <a href="instruction_cache.icache_stage1_m.status_array_wrapper_m.stat_array.html" target="_blank">cg (clock_gater)</a>
+                              </li>
+                            </ul>
+                          </details>
+                        </li>
+                      </ul>
+                      <ul>
+                        <li>
+                          <details>
+                            <summary>
+                              <a href="instruction_cache.icache_stage1_m.status_array_wrapper_m.stat_array.html">stat_array (status_array)</a>
+                            </summary>
+                            <ul>
+                              <li>
+                                <a href="instruction_cache.icache_stage1_m.status_array_wrapper_m.stat_array.html" target="_blank">cg (clock_gater)</a>
+                              </li>
+                            </ul>
+                            <ul>
+                              <li>
+                                <a href="instruction_cache.icache_stage1_m.status_array_wrapper_m.stat_array.html" target="_blank">status_sram (sky130_sram_0kbytes_1r1w_16x8_2)</a>
+                              </li>
+                            </ul>
+                          </details>
+                        </li>
+                      </ul>
+                    </details>
+                  </li>
+                </ul>
+                <ul>
+                  <li>
+                    <details>
+                      <summary>
+                        <a href="instruction_cache.icache_stage1_m.tag_array_m.html">tag_array_m (tag_array)</a>
+                      </summary>
+                      <ul>
+                        <li>
+                          <a href="instruction_cache.icache_stage1_m.status_array_wrapper_m.stat_array.html" target="_blank">cg (clock_gater)</a>
+                        </li>
+                      </ul>
+                      <ul>
+                        <li>
+                          <a href="instruction_cache.icache_stage1_m.status_array_wrapper_m.stat_array.html" target="_blank">tag_sram (sky130_sram_0kbytes_1r1w_16x32_8)</a>
+                        </li>
+                      </ul>
+                    </details>
+                  </li>
+                </ul>
+              </details>
+            </li>
+          </ul>
+          <ul>
+            <li>
+              <a href="instruction_cache.icache_stage1_m.html" target="_blank">tc (tag_checker)</a>
+            </li>
+          </ul>
+          <ul>
+            <li>
+              <a href="instruction_cache.icache_stage1_m.html" target="_blank">use_bit_updater_m (use_bit_updater)</a>
+            </li>
+          </ul>
+          <ul>
+            <li>
+              <details>
+                <summary>
+                  <a href="instruction_cache.cache_miss_handler_m.html">cache_miss_handler_m (cache_miss_handler)</a>
+                </summary>
+                <ul>
+                  <li>
+                    <a href="instruction_cache.icache_stage1_m.status_array_wrapper_m.stat_array.html" target="_blank">lru_unit_m (lru_unit)</a>
+                  </li>
+                </ul>
+                <ul>
+                  <li>
+                    <a href="instruction_cache.icache_stage1_m.status_array_wrapper_m.stat_array.html" target="_blank">ctrl_unit (control_unit)</a>
+                  </li>
+                </ul>
+                <ul>
+                  <li>
+                    <details>
+                      <summary>
+                        <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html">mem_ctrl (memory_controller)</a>
+                      </summary>
+                      <ul>
+                        <li>
+                          <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html" target="_blank">memory_buffer_m (memory_buffer)</a>
+                        </li>
+                      </ul>
+                    </details>
+                  </li>
+                </ul>
+                <ul>
+                  <li>
+                    <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html" target="_blank">arrays_updater_m (arrays_updater)</a>
+                  </li>
+                </ul>
+                <ul>
+                  <li>
+                    <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html" target="_blank">missed_word_driver_m (missed_word_driver)</a>
+                  </li>
+                </ul>
+              </details>
+            </li>
+          </ul>
+          <ul>
+            <li>
+              <a href="instruction_cache.cache_miss_handler_m.html" target="_blank">onehot4_dec (onehot_decoder4)</a>
+            </li>
+          </ul>
+          <ul>
+            <li>
+              <details>
+                <summary>
+                  <a href="instruction_cache.dac.html">dac (data_arrays_container)</a>
+                </summary>
+                <ul>
+                  <li>
+                    <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html" target="_blank">cg_read (clock_gater)</a>
+                  </li>
+                </ul>
+                <ul>
+                  <li>
+                    <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html" target="_blank">cg_write (clock_gater)</a>
+                  </li>
+                </ul>
+                <ul>
+                  <li>
+                    <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html" target="_blank">sram0 (sky130_sram_1kbytes_1r1w_256x20_20)</a>
+                  </li>
+                </ul>
+                <ul>
+                  <li>
+                    <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html" target="_blank">sram1 (sky130_sram_1kbytes_1r1w_256x20_20)</a>
+                  </li>
+                </ul>
+                <ul>
+                  <li>
+                    <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html" target="_blank">sram2 (sky130_sram_1kbytes_1r1w_256x20_20)</a>
+                  </li>
+                </ul>
+                <ul>
+                  <li>
+                    <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html" target="_blank">sram3 (sky130_sram_1kbytes_1r1w_256x20_20)</a>
+                  </li>
+                </ul>
+              </details>
+            </li>
+          </ul>
+          <ul>
+            <li>
+              <a href="instruction_cache.dac.html" target="_blank">cmh_doa_miss_state_reg (register__W1)</a>
+            </li>
+          </ul>
+          <ul>
+            <li>
+              <a href="instruction_cache.dac.html" target="_blank">data_out_arb_m (data_out_arb)</a>
+            </li>
+          </ul>
+        </details>
+      </li>
+    </ul>
+  </body>
+</html>

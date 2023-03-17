@@ -1,0 +1,32 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="rtl_html_style.css">
+  </head>
+  <body>
+    <p>File path: src/data_out_arb.v</p>
+    <hr>
+    <pre class="code">
+<code id="1">`timescale <span class="hljs-const">1</span>ns<span class="hljs-operator">/</span><span class="hljs-const">1</span>ps</code>
+<code id="2"></code>
+<code id="3"><span class="hljs-keyword">module</span> data_out_arb <span class="hljs-operator">(</span></code>
+<code id="4">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">READ_WORD_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>   i_missed_word<span class="hljs-operator">,</span></code>
+<code id="5">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                            i_missed_word_valid<span class="hljs-operator">,</span></code>
+<code id="6"></code>
+<code id="7">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">READ_WORD_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>   i_hit_word<span class="hljs-operator">,</span></code>
+<code id="8">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                            i_hit_word_valid<span class="hljs-operator">,</span> </code>
+<code id="9"></code>
+<code id="10">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                            i_miss_state<span class="hljs-operator">,</span></code>
+<code id="11"></code>
+<code id="12">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">READ_WORD_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>   o_cache_word<span class="hljs-operator">,</span></code>
+<code id="13">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                            o_cache_word_valid</code>
+<code id="14"><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="15"></code>
+<code id="16">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">READ_WORD_WIDTH</span> <span class="hljs-operator">=</span> <span class="hljs-const">20</span><span class="hljs-operator">;</span></code>
+<code id="17"></code>
+<code id="18">    <span class="hljs-keyword">assign</span> o_cache_word         <span class="hljs-operator">=</span> i_miss_state ? i_missed_word <span class="hljs-operator">:</span> i_hit_word<span class="hljs-operator">;</span></code>
+<code id="19">    <span class="hljs-keyword">assign</span> o_cache_word_valid   <span class="hljs-operator">=</span> i_miss_state ? i_missed_word_valid <span class="hljs-operator">:</span> i_hit_word_valid<span class="hljs-operator">;</span></code>
+<code id="20">    </code>
+<code id="21"><span class="hljs-keyword">endmodule</span></code>
+</pre>
+  </body>
+</html>

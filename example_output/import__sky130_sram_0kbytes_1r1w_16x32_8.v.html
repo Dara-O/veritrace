@@ -1,0 +1,111 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="rtl_html_style.css">
+  </head>
+  <body>
+    <p>File path: import/sky130_sram_0kbytes_1r1w_16x32_8.v</p>
+    <hr>
+    <pre class="code">
+<code id="1">`timescale <span class="hljs-const">1</span>ns<span class="hljs-operator">/</span><span class="hljs-const">1</span>ps</code>
+<code id="2"><span class="hljs-comment">// OpenRAM SRAM model</span></code>
+<code id="3"><span class="hljs-comment">// Words: 16</span></code>
+<code id="4"><span class="hljs-comment">// Word size: 32</span></code>
+<code id="5"><span class="hljs-comment">// Write size: 8</span></code>
+<code id="6"></code>
+<code id="7"><span class="hljs-keyword">module</span> sky130_sram_0kbytes_1r1w_16x32_8<span class="hljs-operator">(</span></code>
+<code id="8">`ifdef <span class="hljs-const">USE_POWER_PINS</span></code>
+<code id="9">    vccd1<span class="hljs-operator">,</span></code>
+<code id="10">    vssd1<span class="hljs-operator">,</span></code>
+<code id="11">`endif</code>
+<code id="12"><span class="hljs-comment">// Port 0: W</span></code>
+<code id="13">    clk0<span class="hljs-operator">,</span>csb0<span class="hljs-operator">,</span>wmask0<span class="hljs-operator">,</span>addr0<span class="hljs-operator">,</span>din0<span class="hljs-operator">,</span></code>
+<code id="14"><span class="hljs-comment">// Port 1: R</span></code>
+<code id="15">    clk1<span class="hljs-operator">,</span>csb1<span class="hljs-operator">,</span>addr1<span class="hljs-operator">,</span>dout1</code>
+<code id="16">  <span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="17"></code>
+<code id="18">  <span class="hljs-keyword">parameter</span> <span class="hljs-const">NUM_WMASKS</span> <span class="hljs-operator">=</span> <span class="hljs-const">4</span> <span class="hljs-operator">;</span></code>
+<code id="19">  <span class="hljs-keyword">parameter</span> <span class="hljs-const">DATA_WIDTH</span> <span class="hljs-operator">=</span> <span class="hljs-const">32</span> <span class="hljs-operator">;</span></code>
+<code id="20">  <span class="hljs-keyword">parameter</span> <span class="hljs-const">ADDR_WIDTH</span> <span class="hljs-operator">=</span> <span class="hljs-const">4</span> <span class="hljs-operator">;</span></code>
+<code id="21">  <span class="hljs-keyword">parameter</span> <span class="hljs-const">RAM_DEPTH</span> <span class="hljs-operator">=</span> <span class="hljs-const">1</span> <span class="hljs-operator">&lt;</span><span class="hljs-operator">&lt;</span> <span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">;</span></code>
+<code id="22">  <span class="hljs-comment">// FIXME: This delay is arbitrary.</span></code>
+<code id="23">  <span class="hljs-keyword">parameter</span> <span class="hljs-const">DELAY</span> <span class="hljs-operator">=</span> <span class="hljs-const">3</span> <span class="hljs-operator">;</span></code>
+<code id="24">  <span class="hljs-keyword">parameter</span> <span class="hljs-const">VERBOSE</span> <span class="hljs-operator">=</span> <span class="hljs-const">1</span> <span class="hljs-operator">;</span> <span class="hljs-comment">//Set to 0 to only display warnings</span></code>
+<code id="25">  <span class="hljs-keyword">parameter</span> <span class="hljs-const">T_HOLD</span> <span class="hljs-operator">=</span> <span class="hljs-const">1</span> <span class="hljs-operator">;</span> <span class="hljs-comment">//Delay to hold dout value after posedge. Value is arbitrary</span></code>
+<code id="26"></code>
+<code id="27">`ifdef <span class="hljs-const">USE_POWER_PINS</span></code>
+<code id="28">    <span class="hljs-keyword">inout</span> vccd1<span class="hljs-operator">;</span></code>
+<code id="29">    <span class="hljs-keyword">inout</span> vssd1<span class="hljs-operator">;</span></code>
+<code id="30">`endif</code>
+<code id="31">  <span class="hljs-keyword">input</span>  clk0<span class="hljs-operator">;</span> <span class="hljs-comment">// clock</span></code>
+<code id="32">  <span class="hljs-keyword">input</span>   csb0<span class="hljs-operator">;</span> <span class="hljs-comment">// active low chip select</span></code>
+<code id="33">  <span class="hljs-keyword">input</span> <span class="hljs-operator">[</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>  addr0<span class="hljs-operator">;</span></code>
+<code id="34">  <span class="hljs-keyword">input</span> <span class="hljs-operator">[</span><span class="hljs-const">NUM_WMASKS</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>   wmask0<span class="hljs-operator">;</span> <span class="hljs-comment">// write mask</span></code>
+<code id="35">  <span class="hljs-keyword">input</span> <span class="hljs-operator">[</span><span class="hljs-const">DATA_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>  din0<span class="hljs-operator">;</span></code>
+<code id="36">  <span class="hljs-keyword">input</span>  clk1<span class="hljs-operator">;</span> <span class="hljs-comment">// clock</span></code>
+<code id="37">  <span class="hljs-keyword">input</span>   csb1<span class="hljs-operator">;</span> <span class="hljs-comment">// active low chip select</span></code>
+<code id="38">  <span class="hljs-keyword">input</span> <span class="hljs-operator">[</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>  addr1<span class="hljs-operator">;</span></code>
+<code id="39">  <span class="hljs-keyword">output</span> <span class="hljs-operator">[</span><span class="hljs-const">DATA_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> dout1<span class="hljs-operator">;</span></code>
+<code id="40"></code>
+<code id="41">  <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span><span class="hljs-const">DATA_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>    mem <span class="hljs-operator">[</span><span class="hljs-const">0</span><span class="hljs-operator">:</span><span class="hljs-const">RAM_DEPTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">]</span><span class="hljs-operator">;</span></code>
+<code id="42"></code>
+<code id="43">  <span class="hljs-keyword">reg</span>  csb0_reg<span class="hljs-operator">;</span></code>
+<code id="44">  <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span><span class="hljs-const">NUM_WMASKS</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>   wmask0_reg<span class="hljs-operator">;</span></code>
+<code id="45">  <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>  addr0_reg<span class="hljs-operator">;</span></code>
+<code id="46">  <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span><span class="hljs-const">DATA_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>  din0_reg<span class="hljs-operator">;</span></code>
+<code id="47"></code>
+<code id="48">  <span class="hljs-comment">// All inputs are registers</span></code>
+<code id="49">  <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span><span class="hljs-keyword">posedge</span> clk0<span class="hljs-operator">)</span></code>
+<code id="50">  <span class="hljs-keyword">begin</span></code>
+<code id="51">    csb0_reg <span class="hljs-operator">=</span> csb0<span class="hljs-operator">;</span></code>
+<code id="52">    wmask0_reg <span class="hljs-operator">=</span> wmask0<span class="hljs-operator">;</span></code>
+<code id="53">    addr0_reg <span class="hljs-operator">=</span> addr0<span class="hljs-operator">;</span></code>
+<code id="54">    din0_reg <span class="hljs-operator">=</span> din0<span class="hljs-operator">;</span></code>
+<code id="55">    <span class="hljs-keyword">if</span> <span class="hljs-operator">(</span> !csb0_reg <span class="hljs-operator">&amp;</span><span class="hljs-operator">&amp;</span> <span class="hljs-const">VERBOSE</span> <span class="hljs-operator">)</span></code>
+<code id="56">      $display<span class="hljs-operator">(</span>$<span class="hljs-keyword">time</span><span class="hljs-operator">,</span>" <span class="hljs-const">W</span>riting %m addr0<span class="hljs-operator">=</span>%b din0<span class="hljs-operator">=</span>%b wmask0<span class="hljs-operator">=</span>%b"<span class="hljs-operator">,</span>addr0_reg<span class="hljs-operator">,</span>din0_reg<span class="hljs-operator">,</span>wmask0_reg<span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="57">  <span class="hljs-keyword">end</span></code>
+<code id="58"></code>
+<code id="59">  <span class="hljs-keyword">reg</span>  csb1_reg<span class="hljs-operator">;</span></code>
+<code id="60">  <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>  addr1_reg<span class="hljs-operator">;</span></code>
+<code id="61">  <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span><span class="hljs-const">DATA_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>  dout1<span class="hljs-operator">;</span></code>
+<code id="62"></code>
+<code id="63">  <span class="hljs-comment">// All inputs are registers</span></code>
+<code id="64">  <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span><span class="hljs-keyword">posedge</span> clk1<span class="hljs-operator">)</span></code>
+<code id="65">  <span class="hljs-keyword">begin</span></code>
+<code id="66">    csb1_reg <span class="hljs-operator">=</span> csb1<span class="hljs-operator">;</span></code>
+<code id="67">    addr1_reg <span class="hljs-operator">=</span> addr1<span class="hljs-operator">;</span></code>
+<code id="68">    <span class="hljs-keyword">if</span> <span class="hljs-operator">(</span>!csb0 <span class="hljs-operator">&amp;</span><span class="hljs-operator">&amp;</span> !csb1 <span class="hljs-operator">&amp;</span><span class="hljs-operator">&amp;</span> <span class="hljs-operator">(</span>addr0 <span class="hljs-operator">=</span><span class="hljs-operator">=</span> addr1<span class="hljs-operator">)</span><span class="hljs-operator">)</span></code>
+<code id="69">         $display<span class="hljs-operator">(</span>$<span class="hljs-keyword">time</span><span class="hljs-operator">,</span>" <span class="hljs-const">WARNING</span><span class="hljs-operator">:</span> <span class="hljs-const">W</span>riting <span class="hljs-keyword">and</span> reading addr0<span class="hljs-operator">=</span>%b <span class="hljs-keyword">and</span> addr1<span class="hljs-operator">=</span>%b simultaneously!"<span class="hljs-operator">,</span>addr0<span class="hljs-operator">,</span>addr1<span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="70">    #<span class="hljs-operator">(</span><span class="hljs-const">T_HOLD</span><span class="hljs-operator">)</span> dout1 <span class="hljs-operator">=</span> <span class="hljs-const">32</span>'bx<span class="hljs-operator">;</span></code>
+<code id="71">    <span class="hljs-keyword">if</span> <span class="hljs-operator">(</span> !csb1_reg <span class="hljs-operator">&amp;</span><span class="hljs-operator">&amp;</span> <span class="hljs-const">VERBOSE</span> <span class="hljs-operator">)</span> </code>
+<code id="72">      $display<span class="hljs-operator">(</span>$<span class="hljs-keyword">time</span><span class="hljs-operator">,</span>" <span class="hljs-const">R</span>eading %m addr1<span class="hljs-operator">=</span>%b dout1<span class="hljs-operator">=</span>%b"<span class="hljs-operator">,</span>addr1_reg<span class="hljs-operator">,</span>mem<span class="hljs-operator">[</span>addr1_reg<span class="hljs-operator">]</span><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="73">  <span class="hljs-keyword">end</span></code>
+<code id="74"></code>
+<code id="75"></code>
+<code id="76">  <span class="hljs-comment">// Memory Write Block Port 0</span></code>
+<code id="77">  <span class="hljs-comment">// Write Operation : When web0 = 0, csb0 = 0</span></code>
+<code id="78">  <span class="hljs-keyword">always</span> @ <span class="hljs-operator">(</span><span class="hljs-keyword">negedge</span> clk0<span class="hljs-operator">)</span></code>
+<code id="79">  <span class="hljs-keyword">begin</span> <span class="hljs-operator">:</span> <span class="hljs-const">MEM_WRITE0</span></code>
+<code id="80">    <span class="hljs-keyword">if</span> <span class="hljs-operator">(</span>!csb0_reg<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="81">        <span class="hljs-keyword">if</span> <span class="hljs-operator">(</span>wmask0_reg<span class="hljs-operator">[</span><span class="hljs-const">0</span><span class="hljs-operator">]</span><span class="hljs-operator">)</span></code>
+<code id="82">                mem<span class="hljs-operator">[</span>addr0_reg<span class="hljs-operator">]</span><span class="hljs-operator">[</span><span class="hljs-const">7</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> <span class="hljs-operator">=</span> din0_reg<span class="hljs-operator">[</span><span class="hljs-const">7</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span><span class="hljs-operator">;</span></code>
+<code id="83">        <span class="hljs-keyword">if</span> <span class="hljs-operator">(</span>wmask0_reg<span class="hljs-operator">[</span><span class="hljs-const">1</span><span class="hljs-operator">]</span><span class="hljs-operator">)</span></code>
+<code id="84">                mem<span class="hljs-operator">[</span>addr0_reg<span class="hljs-operator">]</span><span class="hljs-operator">[</span><span class="hljs-const">1</span><span class="hljs-keyword"><span class="hljs-const">5</span></span><span class="hljs-operator">:</span><span class="hljs-const">8</span><span class="hljs-operator">]</span> <span class="hljs-operator">=</span> din0_reg<span class="hljs-operator">[</span><span class="hljs-const">1</span><span class="hljs-keyword"><span class="hljs-const">5</span></span><span class="hljs-operator">:</span><span class="hljs-const">8</span><span class="hljs-operator">]</span><span class="hljs-operator">;</span></code>
+<code id="85">        <span class="hljs-keyword">if</span> <span class="hljs-operator">(</span>wmask0_reg<span class="hljs-operator">[</span><span class="hljs-const">2</span><span class="hljs-operator">]</span><span class="hljs-operator">)</span></code>
+<code id="86">                mem<span class="hljs-operator">[</span>addr0_reg<span class="hljs-operator">]</span><span class="hljs-operator">[</span><span class="hljs-const">23</span><span class="hljs-operator">:</span><span class="hljs-const">16</span><span class="hljs-operator">]</span> <span class="hljs-operator">=</span> din0_reg<span class="hljs-operator">[</span><span class="hljs-const">23</span><span class="hljs-operator">:</span><span class="hljs-const">16</span><span class="hljs-operator">]</span><span class="hljs-operator">;</span></code>
+<code id="87">        <span class="hljs-keyword">if</span> <span class="hljs-operator">(</span>wmask0_reg<span class="hljs-operator">[</span><span class="hljs-const">3</span><span class="hljs-operator">]</span><span class="hljs-operator">)</span></code>
+<code id="88">                mem<span class="hljs-operator">[</span>addr0_reg<span class="hljs-operator">]</span><span class="hljs-operator">[</span><span class="hljs-const">31</span><span class="hljs-operator">:</span><span class="hljs-const">24</span><span class="hljs-operator">]</span> <span class="hljs-operator">=</span> din0_reg<span class="hljs-operator">[</span><span class="hljs-const">31</span><span class="hljs-operator">:</span><span class="hljs-const">24</span><span class="hljs-operator">]</span><span class="hljs-operator">;</span></code>
+<code id="89">    <span class="hljs-keyword">end</span></code>
+<code id="90">  <span class="hljs-keyword">end</span></code>
+<code id="91"></code>
+<code id="92">  <span class="hljs-comment">// Memory Read Block Port 1</span></code>
+<code id="93">  <span class="hljs-comment">// Read Operation : When web1 = 1, csb1 = 0</span></code>
+<code id="94">  <span class="hljs-keyword">always</span> @ <span class="hljs-operator">(</span><span class="hljs-keyword">negedge</span> clk1<span class="hljs-operator">)</span></code>
+<code id="95">  <span class="hljs-keyword">begin</span> <span class="hljs-operator">:</span> <span class="hljs-const">MEM_READ1</span></code>
+<code id="96">    <span class="hljs-keyword">if</span> <span class="hljs-operator">(</span>!csb1_reg<span class="hljs-operator">)</span></code>
+<code id="97">       dout1 <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> #<span class="hljs-operator">(</span><span class="hljs-const">DELAY</span><span class="hljs-operator">)</span> mem<span class="hljs-operator">[</span>addr1_reg<span class="hljs-operator">]</span><span class="hljs-operator">;</span></code>
+<code id="98">  <span class="hljs-keyword">end</span></code>
+<code id="99"></code>
+<code id="100"><span class="hljs-keyword">endmodule</span></code>
+</pre>
+  </body>
+</html>

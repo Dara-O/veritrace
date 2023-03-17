@@ -1,0 +1,63 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="rtl_html_style.css">
+  </head>
+  <body>
+    <p>File path: src/sa_w_arb.v</p>
+    <hr>
+    <pre class="code">
+<code id="1">`timescale <span class="hljs-const">1</span>ns<span class="hljs-operator">/</span><span class="hljs-const">1</span>ps</code>
+<code id="2"></code>
+<code id="3"><span class="hljs-comment">// status array write arbiter</span></code>
+<code id="4"><span class="hljs-keyword">module</span> sa_w_arb<span class="hljs-operator">(</span> </code>
+<code id="5">    <span class="hljs-comment">// from use bit updater</span></code>
+<code id="6">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">SET_ADDR_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>    i_ubit_upd_sa_set_addr<span class="hljs-operator">,</span> </code>
+<code id="7">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">SA_WORD_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>     i_ubit_upd_sa_data<span class="hljs-operator">,</span></code>
+<code id="8">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">NUM_WAYS</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>          i_ubit_upd_sa_mask<span class="hljs-operator">,</span></code>
+<code id="9">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                            i_ubit_upd_sa_valid<span class="hljs-operator">,</span>   </code>
+<code id="10"></code>
+<code id="11">    <span class="hljs-comment">// from miss handler</span></code>
+<code id="12">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">SET_ADDR_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>    i_miss_write_set_addr<span class="hljs-operator">,</span></code>
+<code id="13">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">SA_WORD_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>     i_miss_write_data<span class="hljs-operator">,</span> </code>
+<code id="14">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">NUM_WAYS</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>          i_miss_write_mask<span class="hljs-operator">,</span></code>
+<code id="15">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                            i_miss_if_valid<span class="hljs-operator">,</span> </code>
+<code id="16"></code>
+<code id="17">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                            i_miss_state<span class="hljs-operator">,</span></code>
+<code id="18"></code>
+<code id="19">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">reg</span>     <span class="hljs-operator">[</span><span class="hljs-const">SET_ADDR_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>    o_w_set_addr<span class="hljs-operator">,</span> </code>
+<code id="20">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">reg</span>     <span class="hljs-operator">[</span><span class="hljs-const">SA_WORD_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>     o_w_data<span class="hljs-operator">,</span></code>
+<code id="21">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">reg</span>     <span class="hljs-operator">[</span><span class="hljs-const">NUM_WAYS</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>          o_w_mask<span class="hljs-operator">,</span></code>
+<code id="22">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">reg</span>                             o_w_valid </code>
+<code id="23"><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="24"></code>
+<code id="25">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">SET_ADDR_WIDTH</span>   <span class="hljs-operator">=</span> <span class="hljs-const">4</span><span class="hljs-operator">;</span></code>
+<code id="26">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">SA_WORD_WIDTH</span>    <span class="hljs-operator">=</span> <span class="hljs-const">8</span><span class="hljs-operator">;</span></code>
+<code id="27">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">NUM_WAYS</span>         <span class="hljs-operator">=</span> <span class="hljs-const">4</span><span class="hljs-operator">;</span></code>
+<code id="28"></code>
+<code id="29">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span>*<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="30">        <span class="hljs-keyword">case</span><span class="hljs-operator">(</span>i_miss_state<span class="hljs-operator">)</span></code>
+<code id="31">        <span class="hljs-const">1</span>'b0    <span class="hljs-operator">:</span>   <span class="hljs-keyword">begin</span></code>
+<code id="32">            o_w_set_addr    <span class="hljs-operator">=</span> i_ubit_upd_sa_set_addr<span class="hljs-operator">;</span></code>
+<code id="33">            o_w_data        <span class="hljs-operator">=</span> i_ubit_upd_sa_data<span class="hljs-operator">;</span></code>
+<code id="34">            o_w_mask        <span class="hljs-operator">=</span> i_ubit_upd_sa_mask<span class="hljs-operator">;</span></code>
+<code id="35">            o_w_valid       <span class="hljs-operator">=</span> i_ubit_upd_sa_valid<span class="hljs-operator">;</span></code>
+<code id="36">        <span class="hljs-keyword">end</span></code>
+<code id="37">        <span class="hljs-const">1</span>'b1    <span class="hljs-operator">:</span>   <span class="hljs-keyword">begin</span></code>
+<code id="38">            o_w_set_addr    <span class="hljs-operator">=</span>   i_miss_write_set_addr<span class="hljs-operator">;</span></code>
+<code id="39">            o_w_data        <span class="hljs-operator">=</span>   i_miss_write_data<span class="hljs-operator">;</span></code>
+<code id="40">            o_w_mask        <span class="hljs-operator">=</span>   i_miss_write_mask<span class="hljs-operator">;</span></code>
+<code id="41">            o_w_valid       <span class="hljs-operator">=</span>   i_miss_if_valid<span class="hljs-operator">;</span></code>
+<code id="42">        <span class="hljs-keyword">end</span></code>
+<code id="43">        <span class="hljs-keyword">default</span> <span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="44">            o_w_set_addr    <span class="hljs-operator">=</span>   <span class="hljs-operator">{</span><span class="hljs-const">SET_ADDR_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="45">            o_w_data        <span class="hljs-operator">=</span>   <span class="hljs-operator">{</span><span class="hljs-const">SA_WORD_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="46">            o_w_mask        <span class="hljs-operator">=</span>   <span class="hljs-operator">{</span><span class="hljs-const">NUM_WAYS</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="47">            o_w_valid       <span class="hljs-operator">=</span>   <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="48">        <span class="hljs-keyword">end</span></code>
+<code id="49">        <span class="hljs-keyword">endcase</span></code>
+<code id="50">    <span class="hljs-keyword">end</span></code>
+<code id="51"></code>
+<code id="52"><span class="hljs-keyword">endmodule</span></code>
+</pre>
+  </body>
+</html>

@@ -1,0 +1,36 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="rtl_html_style.css">
+  </head>
+  <body>
+    <p>File path: import/register.v</p>
+    <hr>
+    <pre class="code">
+<code id="1">`timescale <span class="hljs-const">1</span>ns<span class="hljs-operator">/</span><span class="hljs-const">1</span>ps</code>
+<code id="2"></code>
+<code id="3"><span class="hljs-keyword">module</span> register #<span class="hljs-operator">(</span><span class="hljs-keyword">parameter</span> <span class="hljs-const">WIDTH</span><span class="hljs-operator">=</span><span class="hljs-const">8</span><span class="hljs-operator">)</span> <span class="hljs-operator">(</span></code>
+<code id="4">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>     i_d<span class="hljs-operator">,</span></code>
+<code id="5"></code>
+<code id="6">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                    clk<span class="hljs-operator">,</span></code>
+<code id="7">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                    arst_n<span class="hljs-operator">,</span></code>
+<code id="8">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                    i_halt<span class="hljs-operator">,</span></code>
+<code id="9"></code>
+<code id="10">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">reg</span>     <span class="hljs-operator">[</span><span class="hljs-const">WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>     o_q<span class="hljs-operator">,</span></code>
+<code id="11">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                    o_ready</code>
+<code id="12"><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="13">    </code>
+<code id="14">    <span class="hljs-keyword">assign</span> o_ready <span class="hljs-operator">=</span> <span class="hljs-operator">~</span>i_halt<span class="hljs-operator">;</span></code>
+<code id="15"></code>
+<code id="16">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span><span class="hljs-keyword">posedge</span> clk<span class="hljs-operator">,</span> <span class="hljs-keyword">negedge</span> arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="17">        <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="18">            o_q <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="19">        <span class="hljs-keyword">end</span></code>
+<code id="20">        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>i_halt<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="21">            o_q <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> i_d<span class="hljs-operator">;</span></code>
+<code id="22">        <span class="hljs-keyword">end</span></code>
+<code id="23">    <span class="hljs-keyword">end</span></code>
+<code id="24">	</code>
+<code id="25"><span class="hljs-keyword">endmodule</span></code>
+</pre>
+  </body>
+</html>

@@ -1,0 +1,61 @@
+
+#banner {
+    border: 1px solid;
+    padding: 10px;
+    box-shadow: 5px 10px #888888;
+}
+
+body {
+    font-family: sans-serif;
+    background-color: #fafafa;
+}
+
+a:hover {
+    background-color: #c6f7ed;
+    ;
+}
+
+.tree {
+    --spacing: 1.5rem;
+    --radius: 1px;
+    --top_padding: 3px;
+}
+
+/* Padding */
+
+.tree li {
+    display: block;
+    position: relative;
+    padding-left: calc(2 * var(--spacing) - var(--radius) - 2px);
+    padding-top: var(--top_padding);
+}
+
+.tree ul {
+    margin-left: calc(var(--radius) - var(--spacing));
+    padding-left: 0;
+    padding-top: var(--top_padding);
+}
+
+/* Vertical lines */
+
+.tree ul li {
+    border-left: 2px solid #ddd;
+}
+
+.tree ul li:last-child {
+    border-color: transparent;
+}
+
+/* Horizontal lines */
+
+.tree ul li::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: calc(var(--spacing) / -2);
+    left: -2px;
+    width: calc(var(--spacing) + 2px);
+    height: calc(var(--spacing) + 1px);
+    border: solid #ddd;
+    border-width: 0 0 2px 2px;
+}

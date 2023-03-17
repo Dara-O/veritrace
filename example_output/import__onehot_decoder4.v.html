@@ -1,0 +1,32 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="rtl_html_style.css">
+  </head>
+  <body>
+    <p>File path: import/onehot_decoder4.v</p>
+    <hr>
+    <pre class="code">
+<code id="1">`timescale <span class="hljs-const">1</span>ns<span class="hljs-operator">/</span><span class="hljs-const">1</span>ps</code>
+<code id="2"></code>
+<code id="3"><span class="hljs-keyword">module</span> onehot_decoder4<span class="hljs-operator">(</span></code>
+<code id="4">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">3</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>	i_onehot<span class="hljs-operator">,</span></code>
+<code id="5"></code>
+<code id="6">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">reg</span>     <span class="hljs-operator">[</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>	o_decoded</code>
+<code id="7"><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="8"></code>
+<code id="9">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span>*<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="10">        <span class="hljs-keyword">casez</span><span class="hljs-operator">(</span>i_onehot<span class="hljs-operator">)</span> </code>
+<code id="11">        <span class="hljs-const">4</span>'b1???	<span class="hljs-operator">:</span>	 o_decoded <span class="hljs-operator">=</span> <span class="hljs-const">3</span><span class="hljs-operator">;</span></code>
+<code id="12">        <span class="hljs-const">4</span>'b01??	<span class="hljs-operator">:</span>	 o_decoded <span class="hljs-operator">=</span> <span class="hljs-const">2</span><span class="hljs-operator">;</span></code>
+<code id="13">        <span class="hljs-const">4</span>'b001?	<span class="hljs-operator">:</span>	 o_decoded <span class="hljs-operator">=</span> <span class="hljs-const">1</span><span class="hljs-operator">;</span></code>
+<code id="14">        <span class="hljs-const">4</span>'b0001	<span class="hljs-operator">:</span>	 o_decoded <span class="hljs-operator">=</span> <span class="hljs-const">0</span><span class="hljs-operator">;</span></code>
+<code id="15">        </code>
+<code id="16">        <span class="hljs-keyword">default</span> <span class="hljs-operator">:</span> o_decoded <span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">2</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="17">        <span class="hljs-keyword">endcase</span></code>
+<code id="18">    <span class="hljs-keyword">end</span></code>
+<code id="19"></code>
+<code id="20"><span class="hljs-keyword">endmodule</span></code>
+<code id="21"></code>
+</pre>
+  </body>
+</html>

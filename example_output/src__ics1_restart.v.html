@@ -1,0 +1,126 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="rtl_html_style.css">
+  </head>
+  <body>
+    <p>File path: src/ics1_restart.v</p>
+    <hr>
+    <pre class="code">
+<code id="1">`timescale <span class="hljs-const">1</span>ns<span class="hljs-operator">/</span><span class="hljs-const">1</span>ps</code>
+<code id="2"></code>
+<code id="3"><span class="hljs-keyword">module</span> ics1_restart<span class="hljs-operator">(</span></code>
+<code id="4">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>        i_curr_r_addr<span class="hljs-operator">,</span></code>
+<code id="5">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                            i_curr_r_addr_valid<span class="hljs-operator">,</span></code>
+<code id="6"></code>
+<code id="7">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>        i_prev_r_addr<span class="hljs-operator">,</span></code>
+<code id="8">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                            i_prev_r_addr_valid<span class="hljs-operator">,</span></code>
+<code id="9"></code>
+<code id="10">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                            i_miss_state<span class="hljs-operator">,</span></code>
+<code id="11"></code>
+<code id="12">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                            clk<span class="hljs-operator">,</span></code>
+<code id="13">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                            arst_n<span class="hljs-operator">,</span></code>
+<code id="14">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                            i_halt<span class="hljs-operator">,</span></code>
+<code id="15"></code>
+<code id="16">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">reg</span>     <span class="hljs-operator">[</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>        o_r_addr<span class="hljs-operator">,</span></code>
+<code id="17">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">reg</span>                             o_r_addr_valid<span class="hljs-operator">,</span></code>
+<code id="18"></code>
+<code id="19">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">reg</span>                             o_curr_r_addr_ready</code>
+<code id="20"><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="21"></code>
+<code id="22">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">ADDR_WIDTH</span>       <span class="hljs-operator">=</span> <span class="hljs-const">16</span><span class="hljs-operator">;</span></code>
+<code id="23"></code>
+<code id="24">    <span class="hljs-keyword">localparam</span> <span class="hljs-operator">[</span><span class="hljs-const">0</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> <span class="hljs-const">STATE_IDLE</span>       <span class="hljs-operator">=</span> <span class="hljs-const">0</span><span class="hljs-operator">;</span></code>
+<code id="25">    <span class="hljs-keyword">localparam</span> <span class="hljs-operator">[</span><span class="hljs-const">0</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> <span class="hljs-const">STATE_RESTARTING</span> <span class="hljs-operator">=</span> <span class="hljs-const">1</span><span class="hljs-operator">;</span></code>
+<code id="26">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">NUM_STATES</span>       <span class="hljs-operator">=</span> <span class="hljs-const">2</span><span class="hljs-operator">;</span></code>
+<code id="27"></code>
+<code id="28">    <span class="hljs-keyword">reg</span> w_curr_r_addr_ready<span class="hljs-operator">;</span></code>
+<code id="29">    <span class="hljs-keyword">assign</span> o_curr_r_addr_ready <span class="hljs-operator">=</span> w_curr_r_addr_ready <span class="hljs-operator">&amp;</span> <span class="hljs-operator">~</span>i_halt<span class="hljs-operator">;</span></code>
+<code id="30"></code>
+<code id="31">    <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span>$clog2<span class="hljs-operator">(</span><span class="hljs-const">NUM_STATES</span><span class="hljs-operator">)</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>    r_state<span class="hljs-operator">;</span></code>
+<code id="32">    <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span>$clog2<span class="hljs-operator">(</span><span class="hljs-const">NUM_STATES</span><span class="hljs-operator">)</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>    w_state<span class="hljs-operator">;</span></code>
+<code id="33"></code>
+<code id="34">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span><span class="hljs-keyword">posedge</span> clk<span class="hljs-operator">,</span> <span class="hljs-keyword">negedge</span> arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="35">        <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="36">            r_state <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_IDLE</span><span class="hljs-operator">;</span></code>
+<code id="37">        <span class="hljs-keyword">end</span></code>
+<code id="38">        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>i_halt<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="39">            r_state <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> w_state<span class="hljs-operator">;</span></code>
+<code id="40">        <span class="hljs-keyword">end</span></code>
+<code id="41">    <span class="hljs-keyword">end</span></code>
+<code id="42"></code>
+<code id="43">    <span class="hljs-keyword">reg</span>    <span class="hljs-operator">[</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>    r_prev_r_addr<span class="hljs-operator">;</span></code>
+<code id="44">    <span class="hljs-keyword">reg</span>                        r_prev_r_addr_valid<span class="hljs-operator">;</span></code>
+<code id="45">    <span class="hljs-keyword">reg</span>                        r_miss_state<span class="hljs-operator">;</span></code>
+<code id="46"></code>
+<code id="47">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span><span class="hljs-keyword">posedge</span> clk<span class="hljs-operator">,</span> <span class="hljs-keyword">negedge</span> arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="48">        <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="49">            r_miss_state        <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="50">        <span class="hljs-keyword">end</span></code>
+<code id="51">        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>i_halt<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="52">            r_miss_state        <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> i_miss_state<span class="hljs-operator">;</span></code>
+<code id="53">        <span class="hljs-keyword">end</span></code>
+<code id="54">    <span class="hljs-keyword">end</span></code>
+<code id="55"></code>
+<code id="56">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span><span class="hljs-keyword">posedge</span> clk<span class="hljs-operator">,</span> <span class="hljs-keyword">negedge</span> arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="57">        <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="58">            r_prev_r_addr       <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="59">            r_prev_r_addr_valid <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="60">        <span class="hljs-keyword">end</span></code>
+<code id="61">        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>i_halt <span class="hljs-operator">&amp;</span> <span class="hljs-operator">(</span><span class="hljs-operator">~</span>r_miss_state <span class="hljs-operator">&amp;</span> i_miss_state<span class="hljs-operator">)</span><span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="62">            r_prev_r_addr       <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> i_prev_r_addr<span class="hljs-operator">;</span></code>
+<code id="63">            r_prev_r_addr_valid <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> i_prev_r_addr_valid<span class="hljs-operator">;</span></code>
+<code id="64">        <span class="hljs-keyword">end</span></code>
+<code id="65">    <span class="hljs-keyword">end</span></code>
+<code id="66"></code>
+<code id="67">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span>*<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="68">        <span class="hljs-keyword">case</span><span class="hljs-operator">(</span>r_state<span class="hljs-operator">)</span></code>
+<code id="69">        <span class="hljs-const">STATE_IDLE</span>  <span class="hljs-operator">:</span>   <span class="hljs-keyword">begin</span></code>
+<code id="70">            w_state <span class="hljs-operator">=</span> <span class="hljs-operator">(</span>i_miss_state<span class="hljs-operator">)</span> ? <span class="hljs-const">STATE_RESTARTING</span> <span class="hljs-operator">:</span> <span class="hljs-const">STATE_IDLE</span><span class="hljs-operator">;</span></code>
+<code id="71">        <span class="hljs-keyword">end</span></code>
+<code id="72">        <span class="hljs-const">STATE_RESTARTING</span> <span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="73">            w_state <span class="hljs-operator">=</span> <span class="hljs-operator">~</span>i_miss_state ? <span class="hljs-const">STATE_IDLE</span> <span class="hljs-operator">:</span> <span class="hljs-const">STATE_RESTARTING</span><span class="hljs-operator">;</span></code>
+<code id="74">        <span class="hljs-keyword">end</span> </code>
+<code id="75">        <span class="hljs-keyword">default</span> <span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="76">            w_state <span class="hljs-operator">=</span> <span class="hljs-const">STATE_IDLE</span><span class="hljs-operator">;</span></code>
+<code id="77">        <span class="hljs-keyword">end</span></code>
+<code id="78">        <span class="hljs-keyword">endcase</span></code>
+<code id="79">    <span class="hljs-keyword">end</span></code>
+<code id="80"></code>
+<code id="81">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span>*<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="82">        <span class="hljs-keyword">case</span><span class="hljs-operator">(</span><span class="hljs-operator">{</span>w_state<span class="hljs-operator">,</span> r_state<span class="hljs-operator">}</span><span class="hljs-operator">)</span></code>
+<code id="83">        <span class="hljs-operator">{</span><span class="hljs-const">STATE_RESTARTING</span><span class="hljs-operator">,</span> <span class="hljs-const">STATE_IDLE</span><span class="hljs-operator">}</span><span class="hljs-operator">,</span>   </code>
+<code id="84">        <span class="hljs-operator">{</span><span class="hljs-const">STATE_RESTARTING</span><span class="hljs-operator">,</span> <span class="hljs-const">STATE_RESTARTING</span><span class="hljs-operator">}</span>   <span class="hljs-operator">:</span>   <span class="hljs-keyword">begin</span></code>
+<code id="85">            o_r_addr <span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'h0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="86">            o_r_addr_valid <span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="87">            </code>
+<code id="88">            w_curr_r_addr_ready <span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="89">        <span class="hljs-keyword">end</span></code>
+<code id="90"></code>
+<code id="91">        <span class="hljs-operator">{</span><span class="hljs-const">STATE_IDLE</span><span class="hljs-operator">,</span> <span class="hljs-const">STATE_RESTARTING</span><span class="hljs-operator">}</span>  <span class="hljs-operator">:</span>   <span class="hljs-keyword">begin</span></code>
+<code id="92">            o_r_addr <span class="hljs-operator">=</span> r_prev_r_addr_valid ? r_prev_r_addr <span class="hljs-operator">:</span> i_curr_r_addr<span class="hljs-operator">;</span></code>
+<code id="93">            o_r_addr_valid <span class="hljs-operator">=</span> r_prev_r_addr_valid <span class="hljs-operator">|</span> i_curr_r_addr_valid<span class="hljs-operator">;</span></code>
+<code id="94">            </code>
+<code id="95">            w_curr_r_addr_ready <span class="hljs-operator">=</span> <span class="hljs-operator">~</span>r_prev_r_addr_valid<span class="hljs-operator">;</span></code>
+<code id="96">        <span class="hljs-keyword">end</span></code>
+<code id="97"></code>
+<code id="98">        <span class="hljs-operator">{</span><span class="hljs-const">STATE_IDLE</span><span class="hljs-operator">,</span> <span class="hljs-const">STATE_IDLE</span><span class="hljs-operator">}</span>  <span class="hljs-operator">:</span>   <span class="hljs-keyword">begin</span></code>
+<code id="99">            o_r_addr <span class="hljs-operator">=</span> i_curr_r_addr<span class="hljs-operator">;</span></code>
+<code id="100">            o_r_addr_valid <span class="hljs-operator">=</span> i_curr_r_addr_valid<span class="hljs-operator">;</span></code>
+<code id="101"></code>
+<code id="102">            w_curr_r_addr_ready <span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b1<span class="hljs-operator">;</span></code>
+<code id="103">        <span class="hljs-keyword">end</span></code>
+<code id="104"></code>
+<code id="105">        <span class="hljs-keyword">default</span> <span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="106">            o_r_addr <span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'h0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="107">            o_r_addr_valid <span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="108"></code>
+<code id="109">            w_curr_r_addr_ready <span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="110">        <span class="hljs-keyword">end</span></code>
+<code id="111"></code>
+<code id="112">        <span class="hljs-keyword">endcase</span></code>
+<code id="113">    <span class="hljs-keyword">end</span></code>
+<code id="114"></code>
+<code id="115"><span class="hljs-keyword">endmodule</span></code>
+</pre>
+  </body>
+</html>

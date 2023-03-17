@@ -1,0 +1,275 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="rtl_html_style.css">
+  </head>
+  <body>
+    <p>File path: src/cache_miss_handler.v</p>
+    <hr>
+    <pre class="code">
+<code id="1">`timescale <span class="hljs-const">1</span>ns<span class="hljs-operator">/</span><span class="hljs-const">1</span>ps</code>
+<code id="2"></code>
+<code id="3"></code>
+<code id="4"><span class="hljs-keyword">module</span> cache_miss_handler <span class="hljs-operator">(</span></code>
+<code id="5">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                i_cache_hit<span class="hljs-operator">,</span></code>
+<code id="6">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">TAG_BITS_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>        i_tag_bits<span class="hljs-operator">,</span></code>
+<code id="7">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">SET_BITS_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>        i_set_bits<span class="hljs-operator">,</span></code>
+<code id="8">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">B_OFFSET_BITS_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>   i_block_offset_bits<span class="hljs-operator">,</span></code>
+<code id="9"></code>
+<code id="10">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">SA_WORD_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>         i_status_array_data<span class="hljs-operator">,</span></code>
+<code id="11">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                i_valid<span class="hljs-operator">,</span></code>
+<code id="12"></code>
+<code id="13">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">MEM_IF_DATA</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>           i_mem_if_data<span class="hljs-operator">,</span> <span class="hljs-comment">// pre-decoded data</span></code>
+<code id="14">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                i_mem_if_valid<span class="hljs-operator">,</span></code>
+<code id="15"></code>
+<code id="16">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                clk<span class="hljs-operator">,</span></code>
+<code id="17">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                arst_n<span class="hljs-operator">,</span></code>
+<code id="18">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                i_halt<span class="hljs-operator">,</span></code>
+<code id="19"></code>
+<code id="20">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                i_sa_blocks_halt<span class="hljs-operator">,</span></code>
+<code id="21">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                i_ta_blocks_halt<span class="hljs-operator">,</span></code>
+<code id="22">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                i_da_blocks_halt<span class="hljs-operator">,</span></code>
+<code id="23"></code>
+<code id="24"></code>
+<code id="25">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">SET_BITS_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>        o_da_set_bits<span class="hljs-operator">,</span></code>
+<code id="26">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span>$clog2<span class="hljs-operator">(</span><span class="hljs-const">NUM_WAYS</span><span class="hljs-operator">)</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>      o_da_way_index<span class="hljs-operator">,</span></code>
+<code id="27">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">B_OFFSET_BITS_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">3</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>   o_da_block_offset_bits<span class="hljs-operator">,</span></code>
+<code id="28">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">DA_WRITE_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>        o_da_write_data<span class="hljs-operator">,</span> <span class="hljs-comment">// data array</span></code>
+<code id="29">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                                o_da_blocks_if_valid<span class="hljs-operator">,</span> </code>
+<code id="30"></code>
+<code id="31">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">TA_SRAM_ADDR_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>    o_ta_write_addr<span class="hljs-operator">,</span></code>
+<code id="32">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">TA_SRAM_WORD_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>    o_ta_write_data<span class="hljs-operator">,</span> <span class="hljs-comment">// tag array</span></code>
+<code id="33">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">NUM_WAYS</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>              o_ta_blocks_mask<span class="hljs-operator">,</span></code>
+<code id="34">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                                o_ta_blocks_if_valid<span class="hljs-operator">,</span> </code>
+<code id="35"></code>
+<code id="36">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">SA_SRAM_ADDR_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>    o_sa_write_addr<span class="hljs-operator">,</span></code>
+<code id="37">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">SA_WORD_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>         o_sa_write_data<span class="hljs-operator">,</span> <span class="hljs-comment">// status array</span></code>
+<code id="38">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">NUM_WAYS</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>              o_sa_blocks_mask<span class="hljs-operator">,</span></code>
+<code id="39">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                                o_sa_blocks_if_valid<span class="hljs-operator">,</span> </code>
+<code id="40"></code>
+<code id="41">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">MEM_IF_ADDR</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>           o_mem_if_addr<span class="hljs-operator">,</span> <span class="hljs-comment">// if = interface</span></code>
+<code id="42">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                                o_mem_if_req_valid<span class="hljs-operator">,</span></code>
+<code id="43">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                                o_mem_if_ready<span class="hljs-operator">,</span></code>
+<code id="44"></code>
+<code id="45">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                                o_miss_state<span class="hljs-operator">,</span> <span class="hljs-comment">// if 1, the cache is handling a miss, </span></code>
+<code id="46">                                                              <span class="hljs-comment">// if 0, cache can continue normal operation.</span></code>
+<code id="47"></code>
+<code id="48">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">DA_SRAM_WORD_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>    o_missed_word<span class="hljs-operator">,</span></code>
+<code id="49">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                                o_missed_word_valid<span class="hljs-operator">,</span></code>
+<code id="50">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                                o_ready</code>
+<code id="51"><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="52">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">SET_BITS_WIDTH</span> <span class="hljs-operator">=</span> <span class="hljs-const">4</span><span class="hljs-operator">;</span></code>
+<code id="53">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">B_OFFSET_BITS_WIDTH</span> <span class="hljs-operator">=</span> <span class="hljs-const">4</span><span class="hljs-operator">;</span> <span class="hljs-comment">//block offset bits width</span></code>
+<code id="54">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">TAG_BITS_WIDTH</span> <span class="hljs-operator">=</span> <span class="hljs-const">8</span><span class="hljs-operator">;</span></code>
+<code id="55"></code>
+<code id="56">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">SA_WORD_WIDTH</span> <span class="hljs-operator">=</span> <span class="hljs-const">4</span>*<span class="hljs-const">2</span><span class="hljs-operator">;</span> </code>
+<code id="57">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">SA_SRAM_ADDR_WIDTH</span> <span class="hljs-operator">=</span> <span class="hljs-const">4</span><span class="hljs-operator">;</span></code>
+<code id="58"></code>
+<code id="59">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">TA_SRAM_WORD_WIDTH</span> <span class="hljs-operator">=</span> <span class="hljs-const">4</span>*<span class="hljs-const">8</span><span class="hljs-operator">;</span></code>
+<code id="60">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">TA_SRAM_ADDR_WIDTH</span> <span class="hljs-operator">=</span> <span class="hljs-const">4</span><span class="hljs-operator">;</span></code>
+<code id="61"></code>
+<code id="62">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">DA_SRAM_WORD_WIDTH</span> <span class="hljs-operator">=</span> <span class="hljs-const">20</span><span class="hljs-operator">;</span> </code>
+<code id="63">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">DA_WRITE_WIDTH</span> <span class="hljs-operator">=</span> <span class="hljs-const">80</span><span class="hljs-operator">;</span> </code>
+<code id="64">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">DA_SRAM_ADDR_WIDTH</span> <span class="hljs-operator">=</span> <span class="hljs-const">8</span><span class="hljs-operator">;</span></code>
+<code id="65"></code>
+<code id="66">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">MEM_IF_ADDR</span> <span class="hljs-operator">=</span> <span class="hljs-const">16</span><span class="hljs-operator">;</span></code>
+<code id="67">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">MEM_IF_DATA</span> <span class="hljs-operator">=</span> <span class="hljs-const">40</span><span class="hljs-operator">;</span></code>
+<code id="68">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">NUM_WAYS</span> <span class="hljs-operator">=</span> <span class="hljs-const">4</span><span class="hljs-operator">;</span></code>
+<code id="69"></code>
+<code id="70">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">MEM_BLOCK_DATA_WIDTH</span> <span class="hljs-operator">=</span> <span class="hljs-const">320</span><span class="hljs-operator">;</span></code>
+<code id="71">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">NUM_WORDS_P_BLOCK</span> <span class="hljs-operator">=</span> <span class="hljs-const">16</span><span class="hljs-operator">;</span></code>
+<code id="72"></code>
+<code id="73">    </code>
+<code id="74"></code>
+<code id="75">    <span class="hljs-keyword">reg</span>                             r_cache_hit<span class="hljs-operator">;</span></code>
+<code id="76">    <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span><span class="hljs-const">TAG_BITS_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>        r_tag_bits<span class="hljs-operator">;</span></code>
+<code id="77">    <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span><span class="hljs-const">SET_BITS_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>        r_set_bits<span class="hljs-operator">;</span></code>
+<code id="78">    <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span><span class="hljs-const">B_OFFSET_BITS_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>   r_block_offset_bits<span class="hljs-operator">;</span></code>
+<code id="79">    </code>
+<code id="80">    <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span><span class="hljs-const">SA_WORD_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>         r_status_array_data<span class="hljs-operator">;</span></code>
+<code id="81">    <span class="hljs-keyword">reg</span>                             r_valid<span class="hljs-operator">;</span></code>
+<code id="82"></code>
+<code id="83">    <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span><span class="hljs-const">MEM_IF_DATA</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>           r_mem_if_data<span class="hljs-operator">;</span></code>
+<code id="84">    <span class="hljs-keyword">reg</span>                             r_mem_if_valid<span class="hljs-operator">;</span></code>
+<code id="85"></code>
+<code id="86">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span><span class="hljs-keyword">posedge</span> clk<span class="hljs-operator">,</span> <span class="hljs-keyword">negedge</span> arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="87">        <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="88">            r_cache_hit             <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="89">            r_tag_bits              <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">TAG_BITS_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="90">            r_set_bits              <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">SET_BITS_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="91">            r_block_offset_bits     <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">B_OFFSET_BITS_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="92"></code>
+<code id="93">            r_status_array_data     <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">SA_WORD_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="94">            r_valid                 <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span><span class="hljs-operator">;</span></code>
+<code id="95"></code>
+<code id="96">            r_mem_if_data           <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">MEM_IF_DATA</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="97">            r_mem_if_valid          <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="98">        <span class="hljs-keyword">end</span></code>
+<code id="99">        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span><span class="hljs-operator">(</span>o_ready<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="100">            r_cache_hit             <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> i_cache_hit<span class="hljs-operator">;</span></code>
+<code id="101">            r_tag_bits              <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> i_tag_bits<span class="hljs-operator">;</span></code>
+<code id="102">            r_set_bits              <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> i_set_bits<span class="hljs-operator">;</span></code>
+<code id="103">            r_block_offset_bits     <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> i_block_offset_bits<span class="hljs-operator">;</span></code>
+<code id="104"></code>
+<code id="105">            r_status_array_data     <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> i_status_array_data<span class="hljs-operator">;</span></code>
+<code id="106">            r_valid                 <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> i_valid<span class="hljs-operator">;</span></code>
+<code id="107"></code>
+<code id="108">            r_mem_if_data           <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> i_mem_if_data<span class="hljs-operator">;</span></code>
+<code id="109">            r_mem_if_valid          <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> i_mem_if_valid<span class="hljs-operator">;</span></code>
+<code id="110">        <span class="hljs-keyword">end</span></code>
+<code id="111">    <span class="hljs-keyword">end</span></code>
+<code id="112"></code>
+<code id="113">    <span class="hljs-keyword">wire</span> <span class="hljs-operator">[</span><span class="hljs-const">NUM_WAYS</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> lru_block_replacement_mask<span class="hljs-operator">;</span></code>
+<code id="114">    <span class="hljs-keyword">wire</span> lru_brm_valid<span class="hljs-operator">;</span></code>
+<code id="115"></code>
+<code id="116">    lru_unit lru_unit_m<span class="hljs-operator">(</span></code>
+<code id="117">        .i_sa_data<span class="hljs-operator">(</span>r_status_array_data<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="118">        .i_sa_data_valid<span class="hljs-operator">(</span>r_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="119"></code>
+<code id="120">        .o_block_replacement_mask<span class="hljs-operator">(</span>lru_block_replacement_mask<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="121">        .o_brm_valid<span class="hljs-operator">(</span>lru_brm_valid<span class="hljs-operator">)</span></code>
+<code id="122">    <span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="123">  </code>
+<code id="124"></code>
+<code id="125">    </code>
+<code id="126">    <span class="hljs-keyword">wire</span> mc_cu_mem_data_received<span class="hljs-operator">;</span></code>
+<code id="127">    <span class="hljs-keyword">wire</span> mc_cu_mem_if_valid<span class="hljs-operator">;</span></code>
+<code id="128">    <span class="hljs-comment">// wire mc_cu_mem_ready; // unnecessary</span></code>
+<code id="129">    </code>
+<code id="130">    <span class="hljs-keyword">wire</span> au_cu_arrays_update_complete<span class="hljs-operator">;</span></code>
+<code id="131">    <span class="hljs-keyword">wire</span> au_cu_auc_valid<span class="hljs-operator">;</span></code>
+<code id="132">    </code>
+<code id="133">    <span class="hljs-keyword">wire</span> cu_mc_initiate_mem_req<span class="hljs-operator">;</span></code>
+<code id="134">    <span class="hljs-keyword">wire</span> cu_mc_valid<span class="hljs-operator">;</span></code>
+<code id="135">    <span class="hljs-keyword">wire</span> cu_miss_state<span class="hljs-operator">;</span></code>
+<code id="136">    <span class="hljs-keyword">wire</span> cu_initiate_array_update<span class="hljs-operator">;</span> </code>
+<code id="137">    <span class="hljs-keyword">wire</span> cu_send_missed_word<span class="hljs-operator">;</span></code>
+<code id="138">    <span class="hljs-keyword">wire</span> cu_valid<span class="hljs-operator">;</span> </code>
+<code id="139">    <span class="hljs-keyword">wire</span> cu_ready<span class="hljs-operator">;</span></code>
+<code id="140">    <span class="hljs-comment">// wire cu_mem_if_ready; // unnecessary</span></code>
+<code id="141">    <span class="hljs-comment">// wire cu_arrays_updater_ready; // unnecessary</span></code>
+<code id="142"></code>
+<code id="143">    <span class="hljs-keyword">assign</span> o_miss_state <span class="hljs-operator">=</span> cu_miss_state<span class="hljs-operator">;</span></code>
+<code id="144">    <span class="hljs-keyword">assign</span> o_ready <span class="hljs-operator">=</span> <span class="hljs-operator">~</span><span class="hljs-operator">(</span>i_halt <span class="hljs-operator">|</span> o_miss_state<span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="145"></code>
+<code id="146">    control_unit ctrl_unit<span class="hljs-operator">(</span></code>
+<code id="147">        .i_cache_hit<span class="hljs-operator">(</span>r_cache_hit<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="148">        .i_valid<span class="hljs-operator">(</span>r_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="149"></code>
+<code id="150">        .i_mem_data_received<span class="hljs-operator">(</span>mc_cu_mem_data_received<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="151">        .i_mem_if_valid<span class="hljs-operator">(</span>mc_cu_mem_if_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="152"></code>
+<code id="153">        .i_arrays_update_complete<span class="hljs-operator">(</span>au_cu_arrays_update_complete<span class="hljs-operator">)</span><span class="hljs-operator">,</span> <span class="hljs-comment">// au == arrays update complete</span></code>
+<code id="154">        .i_auc_valid<span class="hljs-operator">(</span>au_cu_auc_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="155">        </code>
+<code id="156">        .clk<span class="hljs-operator">(</span>clk<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="157">        .arst_n<span class="hljs-operator">(</span>arst_n<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="158">        .i_halt<span class="hljs-operator">(</span>i_halt<span class="hljs-operator">)</span><span class="hljs-operator">,</span> <span class="hljs-comment">//Future Note: all the modules should be able to halt it (only when they need to be accessed but arent ready)</span></code>
+<code id="159">        </code>
+<code id="160">        .o_miss_state<span class="hljs-operator">(</span>cu_miss_state<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="161">        </code>
+<code id="162">        .o_initiate_mem_req<span class="hljs-operator">(</span>cu_mc_initiate_mem_req<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="163">        .o_mem_if_valid<span class="hljs-operator">(</span>cu_mc_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="164">        </code>
+<code id="165">        .o_initiate_array_update<span class="hljs-operator">(</span>cu_initiate_array_update<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="166">        .o_send_missed_word<span class="hljs-operator">(</span>cu_send_missed_word<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="167">        .o_valid<span class="hljs-operator">(</span>cu_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="168"></code>
+<code id="169">        .o_mem_if_ready<span class="hljs-operator">(</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="170">        .o_arrays_updater_ready<span class="hljs-operator">(</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="171">        .o_ready<span class="hljs-operator">(</span>cu_ready<span class="hljs-operator">)</span></code>
+<code id="172">    <span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="173"></code>
+<code id="174">    <span class="hljs-keyword">wire</span> <span class="hljs-operator">[</span><span class="hljs-const">MEM_BLOCK_DATA_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> mc_mem_block_data<span class="hljs-operator">;</span></code>
+<code id="175">    <span class="hljs-keyword">wire</span> mc_mem_block_data_valid<span class="hljs-operator">;</span></code>
+<code id="176">    <span class="hljs-keyword">wire</span> <span class="hljs-operator">[</span>$clog2<span class="hljs-operator">(</span><span class="hljs-const">NUM_WORDS_P_BLOCK</span><span class="hljs-operator">)</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> mc_mem_num_words_rcvd<span class="hljs-operator">;</span></code>
+<code id="177"></code>
+<code id="178">    memory_controller mem_ctrl<span class="hljs-operator">(</span></code>
+<code id="179">        .i_block_addr<span class="hljs-operator">(</span><span class="hljs-operator">{</span>r_tag_bits<span class="hljs-operator">,</span> r_set_bits<span class="hljs-operator">,</span> r_block_offset_bits<span class="hljs-operator">}</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="180">        .i_block_addr_valid<span class="hljs-operator">(</span>r_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="181">    </code>
+<code id="182">        .i_initiate_req<span class="hljs-operator">(</span>cu_mc_initiate_mem_req<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="183">        .i_ir_valid<span class="hljs-operator">(</span>cu_mc_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span> <span class="hljs-comment">// initiate request valid</span></code>
+<code id="184">        </code>
+<code id="185">        <span class="hljs-comment">// from memory</span></code>
+<code id="186">        .i_mem_data<span class="hljs-operator">(</span>i_mem_if_data<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="187">        .i_mem_data_valid<span class="hljs-operator">(</span>i_mem_if_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="188">    </code>
+<code id="189">        .clk<span class="hljs-operator">(</span>clk<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="190">        .arst_n<span class="hljs-operator">(</span>arst_n<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="191">        .i_halt<span class="hljs-operator">(</span>i_halt<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="192"></code>
+<code id="193">        <span class="hljs-comment">// to memory</span></code>
+<code id="194">        .o_mem_req_addr<span class="hljs-operator">(</span>o_mem_if_addr<span class="hljs-operator">)</span><span class="hljs-operator">,</span> </code>
+<code id="195">        .o_mem_req_valid<span class="hljs-operator">(</span>o_mem_if_req_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="196">        .o_mem_ready<span class="hljs-operator">(</span>o_mem_if_ready<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="197">        </code>
+<code id="198">        .o_mem_data_received<span class="hljs-operator">(</span>mc_cu_mem_data_received<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="199">        .o_mem_data_rcvd_valid<span class="hljs-operator">(</span>mc_cu_mem_if_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="200">        .o_ir_ready<span class="hljs-operator">(</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span> <span class="hljs-comment">//mc_cu_mem_ready</span></code>
+<code id="201"></code>
+<code id="202">        .o_mem_block_data<span class="hljs-operator">(</span>mc_mem_block_data<span class="hljs-operator">)</span><span class="hljs-operator">,</span> </code>
+<code id="203">        .o_mem_num_words_rcvd<span class="hljs-operator">(</span>mc_mem_num_words_rcvd<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="204">        .o_mem_block_data_valid<span class="hljs-operator">(</span>mc_mem_block_data_valid<span class="hljs-operator">)</span></code>
+<code id="205">    <span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="206"></code>
+<code id="207">    <span class="hljs-comment">// wire au_ready;</span></code>
+<code id="208">    arrays_updater arrays_updater_m<span class="hljs-operator">(</span></code>
+<code id="209">        .i_initiate_arrays_update<span class="hljs-operator">(</span>cu_initiate_array_update<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="210">        .i_iau_valid<span class="hljs-operator">(</span>cu_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="211"></code>
+<code id="212">        .i_set_addr<span class="hljs-operator">(</span>r_set_bits<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="213">        .i_set_addr_valid<span class="hljs-operator">(</span>r_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="214"></code>
+<code id="215">        .i_tag_bits<span class="hljs-operator">(</span>r_tag_bits<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="216">        .i_tag_bits_valid<span class="hljs-operator">(</span>r_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="217"></code>
+<code id="218">        .i_block_replacement_mask<span class="hljs-operator">(</span>lru_block_replacement_mask<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="219">        .i_brm_valid<span class="hljs-operator">(</span>lru_brm_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="220"></code>
+<code id="221">        .i_mem_data<span class="hljs-operator">(</span>mc_mem_block_data<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="222">        .i_mem_num_words_rcvd<span class="hljs-operator">(</span>mc_mem_num_words_rcvd<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="223">        .i_mem_data_valid<span class="hljs-operator">(</span>mc_mem_block_data_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="224"></code>
+<code id="225">        .i_miss_state<span class="hljs-operator">(</span>cu_miss_state<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="226">    </code>
+<code id="227">        .clk<span class="hljs-operator">(</span>clk<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="228">        .arst_n<span class="hljs-operator">(</span>arst_n<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="229">        .i_halt<span class="hljs-operator">(</span>i_halt<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="230"></code>
+<code id="231">        .i_ta_blocks_halt<span class="hljs-operator">(</span>i_ta_blocks_halt<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="232">        .i_sa_blocks_halt<span class="hljs-operator">(</span>i_sa_blocks_halt<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="233">        .i_da_blocks_halt<span class="hljs-operator">(</span>i_da_blocks_halt<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="234"></code>
+<code id="235">        .o_ta_addr<span class="hljs-operator">(</span>o_ta_write_addr<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="236">        .o_ta_data<span class="hljs-operator">(</span>o_ta_write_data<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="237">        .o_ta_mask<span class="hljs-operator">(</span>o_ta_blocks_mask<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="238">        .o_ta_valid<span class="hljs-operator">(</span>o_ta_blocks_if_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="239"></code>
+<code id="240">        .o_sa_addr<span class="hljs-operator">(</span>o_sa_write_addr<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="241">        .o_sa_data<span class="hljs-operator">(</span>o_sa_write_data<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="242">        .o_sa_mask<span class="hljs-operator">(</span>o_sa_blocks_mask<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="243">        .o_sa_valid<span class="hljs-operator">(</span>o_sa_blocks_if_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="244"></code>
+<code id="245">        .o_da_addr<span class="hljs-operator">(</span><span class="hljs-operator">{</span>o_da_set_bits<span class="hljs-operator">,</span> o_da_way_index<span class="hljs-operator">,</span> o_da_block_offset_bits<span class="hljs-operator">}</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="246">        .o_da_data<span class="hljs-operator">(</span>o_da_write_data<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="247">        .o_da_valid<span class="hljs-operator">(</span>o_da_blocks_if_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="248"></code>
+<code id="249">        .o_arrays_update_complete<span class="hljs-operator">(</span>au_cu_arrays_update_complete<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="250">        .o_auc_valid<span class="hljs-operator">(</span>au_cu_auc_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span> <span class="hljs-comment">// arrays_update_complete_valid</span></code>
+<code id="251"></code>
+<code id="252">        .o_ready<span class="hljs-operator">(</span><span class="hljs-operator">)</span></code>
+<code id="253">    <span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="254"></code>
+<code id="255">    missed_word_driver missed_word_driver_m<span class="hljs-operator">(</span></code>
+<code id="256">        .i_mem_data<span class="hljs-operator">(</span>mc_mem_block_data<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="257">        .i_block_offset_bits<span class="hljs-operator">(</span>r_block_offset_bits<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="258">        .i_valid<span class="hljs-operator">(</span>cu_send_missed_word <span class="hljs-operator">&amp;</span> cu_valid <span class="hljs-operator">&amp;</span> r_valid <span class="hljs-operator">&amp;</span> mc_mem_block_data_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="259"></code>
+<code id="260">        .o_missed_word<span class="hljs-operator">(</span>o_missed_word<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="261">        .o_valid<span class="hljs-operator">(</span>o_missed_word_valid<span class="hljs-operator">)</span></code>
+<code id="262">    <span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="263">  </code>
+<code id="264"><span class="hljs-keyword">endmodule</span></code>
+</pre>
+  </body>
+</html>

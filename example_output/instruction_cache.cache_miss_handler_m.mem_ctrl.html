@@ -1,0 +1,1586 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="connectivity_table_styles.css">
+  </head>
+  <body>
+    <h3>Instance Name: <span style="font-weight:normal">mem_ctrl</span>
+    </h3>
+    <h3>Module: <span style="font-weight:normal">memory_controller</span>
+    </h3>
+    <h3>Instance Hierarchy: <span style="font-weight:normal">
+        <a href="instruction_cache.html">instruction_cache</a>.<a href="instruction_cache.cache_miss_handler_m.html">cache_miss_handler_m</a>.<a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html">mem_ctrl</a>
+      </span>
+    </h3>
+    <table>
+      <thead>
+        <tr>
+          <td>Variable Name</td>
+          <td>Variable Info</td>
+          <td>Driver</td>
+          <td>Load</td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td rowspan="3" id="i_block_addr">
+            <p>i_block_addr</p>
+          </td>
+          <td rowspan="3">
+            <p>
+              <strong>type</strong>: logic, input</p>
+            <p>
+              <strong>dim</strong>: [15:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#14">src/memory_controller.v, 14:53</a>
+            </p>
+          </td>
+          <td>
+            <h4>r_tag_bits</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.html#r_tag_bits">instruction_cache.cache_miss_handler_m.r_tag_bits</a>
+            </p>
+            <p>Examine RTL: <a href="src__cache_miss_handler.v.html#179">src/cache_miss_handler.v:179</a>
+            </p>
+          </td>
+          <td>
+            <h4>o_mem_req_addr</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#o_mem_req_addr">instruction_cache.cache_miss_handler_m.mem_ctrl.o_mem_req_addr</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#176">src/memory_controller.v:176</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <h4>r_set_bits</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.html#r_set_bits">instruction_cache.cache_miss_handler_m.r_set_bits</a>
+            </p>
+            <p>Examine RTL: <a href="src__cache_miss_handler.v.html#179">src/cache_miss_handler.v:179</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <h4>r_block_offset_bits</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.html#r_block_offset_bits">instruction_cache.cache_miss_handler_m.r_block_offset_bits</a>
+            </p>
+            <p>Examine RTL: <a href="src__cache_miss_handler.v.html#179">src/cache_miss_handler.v:179</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="i_block_addr_valid">
+            <p>i_block_addr_valid</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic, input</p>
+            <p>
+              <strong>dim</strong>: [0:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#15">src/memory_controller.v, 15:53</a>
+            </p>
+          </td>
+          <td>
+            <h4>r_valid</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.html#r_valid">instruction_cache.cache_miss_handler_m.r_valid</a>
+            </p>
+            <p>Examine RTL: <a href="src__cache_miss_handler.v.html#180">src/cache_miss_handler.v:180</a>
+            </p>
+          </td>
+          <td>
+            <h4>o_mem_req_valid</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#o_mem_req_valid">instruction_cache.cache_miss_handler_m.mem_ctrl.o_mem_req_valid</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#179">src/memory_controller.v:179</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="i_initiate_req">
+            <p>i_initiate_req</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic, input</p>
+            <p>
+              <strong>dim</strong>: [0:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#17">src/memory_controller.v, 17:53</a>
+            </p>
+          </td>
+          <td>
+            <h4>cu_mc_initiate_mem_req</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.html#cu_mc_initiate_mem_req">instruction_cache.cache_miss_handler_m.cu_mc_initiate_mem_req</a>
+            </p>
+            <p>Examine RTL: <a href="src__cache_miss_handler.v.html#182">src/cache_miss_handler.v:182</a>
+            </p>
+          </td>
+          <td>
+            <h4>w_state</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#w_state">instruction_cache.cache_miss_handler_m.mem_ctrl.w_state</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#108">src/memory_controller.v:108</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="i_ir_valid">
+            <p>i_ir_valid</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic, input</p>
+            <p>
+              <strong>dim</strong>: [0:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#18">src/memory_controller.v, 18:53</a>
+            </p>
+          </td>
+          <td>
+            <h4>cu_mc_valid</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.html#cu_mc_valid">instruction_cache.cache_miss_handler_m.cu_mc_valid</a>
+            </p>
+            <p>Examine RTL: <a href="src__cache_miss_handler.v.html#183">src/cache_miss_handler.v:183</a>
+            </p>
+          </td>
+          <td>
+            <h4>w_state</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#w_state">instruction_cache.cache_miss_handler_m.mem_ctrl.w_state</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#108">src/memory_controller.v:108</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="i_mem_data">
+            <p>i_mem_data</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic, input</p>
+            <p>
+              <strong>dim</strong>: [39:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#20">src/memory_controller.v, 20:53</a>
+            </p>
+          </td>
+          <td>
+            <h4>i_mem_if_data</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.html#i_mem_if_data">instruction_cache.cache_miss_handler_m.i_mem_if_data</a>
+            </p>
+            <p>Examine RTL: <a href="src__cache_miss_handler.v.html#186">src/cache_miss_handler.v:186</a>
+            </p>
+          </td>
+          <td>
+            <h4>i_mem_data</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.memory_buffer_m.html#i_mem_data">instruction_cache.cache_miss_handler_m.mem_ctrl.memory_buffer_m.i_mem_data</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#72">src/memory_controller.v:72</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="i_mem_data_valid">
+            <p>i_mem_data_valid</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic, input</p>
+            <p>
+              <strong>dim</strong>: [0:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#21">src/memory_controller.v, 21:53</a>
+            </p>
+          </td>
+          <td>
+            <h4>i_mem_if_valid</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.html#i_mem_if_valid">instruction_cache.cache_miss_handler_m.i_mem_if_valid</a>
+            </p>
+            <p>Examine RTL: <a href="src__cache_miss_handler.v.html#187">src/cache_miss_handler.v:187</a>
+            </p>
+          </td>
+          <td>
+            <h4>i_mem_data_valid</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.memory_buffer_m.html#i_mem_data_valid">instruction_cache.cache_miss_handler_m.mem_ctrl.memory_buffer_m.i_mem_data_valid</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#73">src/memory_controller.v:73</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="clk">
+            <p>clk</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic, input</p>
+            <p>
+              <strong>dim</strong>: [0:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#23">src/memory_controller.v, 23:53</a>
+            </p>
+          </td>
+          <td>
+            <h4>clk</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.html#clk">instruction_cache.cache_miss_handler_m.clk</a>
+            </p>
+            <p>Examine RTL: <a href="src__cache_miss_handler.v.html#189">src/cache_miss_handler.v:189</a>
+            </p>
+          </td>
+          <td>
+            <h4>clk</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.memory_buffer_m.html#clk">instruction_cache.cache_miss_handler_m.mem_ctrl.memory_buffer_m.clk</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#75">src/memory_controller.v:75</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="arst_n">
+            <p>arst_n</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic, input</p>
+            <p>
+              <strong>dim</strong>: [0:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#24">src/memory_controller.v, 24:53</a>
+            </p>
+          </td>
+          <td>
+            <h4>arst_n</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.html#arst_n">instruction_cache.cache_miss_handler_m.arst_n</a>
+            </p>
+            <p>Examine RTL: <a href="src__cache_miss_handler.v.html#190">src/cache_miss_handler.v:190</a>
+            </p>
+          </td>
+          <td>
+            <h4>arst_n</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.memory_buffer_m.html#arst_n">instruction_cache.cache_miss_handler_m.mem_ctrl.memory_buffer_m.arst_n</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#76">src/memory_controller.v:76</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="3" id="i_halt">
+            <p>i_halt</p>
+          </td>
+          <td rowspan="3">
+            <p>
+              <strong>type</strong>: logic, input</p>
+            <p>
+              <strong>dim</strong>: [0:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#25">src/memory_controller.v, 25:53</a>
+            </p>
+          </td>
+          <td>
+            <h4>i_halt</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.html#i_halt">instruction_cache.cache_miss_handler_m.i_halt</a>
+            </p>
+            <p>Examine RTL: <a href="src__cache_miss_handler.v.html#191">src/cache_miss_handler.v:191</a>
+            </p>
+          </td>
+          <td>
+            <h4>i_halt</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.memory_buffer_m.html#i_halt">instruction_cache.cache_miss_handler_m.mem_ctrl.memory_buffer_m.i_halt</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#77">src/memory_controller.v:77</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>None</p>
+          </td>
+          <td>
+            <h4>o_mem_ready</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#o_mem_ready">instruction_cache.cache_miss_handler_m.mem_ctrl.o_mem_ready</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#181">src/memory_controller.v:181</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>None</p>
+          </td>
+          <td>
+            <h4>o_mem_data_rcvd_valid</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#o_mem_data_rcvd_valid">instruction_cache.cache_miss_handler_m.mem_ctrl.o_mem_data_rcvd_valid</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#183">src/memory_controller.v:183</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="6" id="o_mem_req_addr">
+            <p>o_mem_req_addr</p>
+          </td>
+          <td rowspan="6">
+            <p>
+              <strong>type</strong>: logic, output</p>
+            <p>
+              <strong>dim</strong>: [15:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#27">src/memory_controller.v, 27:53</a>
+            </p>
+          </td>
+          <td>
+            <h4>w_state</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#w_state">instruction_cache.cache_miss_handler_m.mem_ctrl.w_state</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#176">src/memory_controller.v:176</a>
+            </p>
+          </td>
+          <td>
+            <h4>o_mem_if_addr</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.html#o_mem_if_addr">instruction_cache.cache_miss_handler_m.o_mem_if_addr</a>
+            </p>
+            <p>Examine RTL: <a href="src__cache_miss_handler.v.html#194">src/cache_miss_handler.v:194</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <h4>r_state</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#r_state">instruction_cache.cache_miss_handler_m.mem_ctrl.r_state</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#176">src/memory_controller.v:176</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <h4>i_block_addr</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#i_block_addr">instruction_cache.cache_miss_handler_m.mem_ctrl.i_block_addr</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#176">src/memory_controller.v:176</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'sh1</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#176">src/memory_controller.v:176</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'sh1</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#176">src/memory_controller.v:176</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>16'h0</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#177">src/memory_controller.v:177</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="5" id="o_mem_req_valid">
+            <p>o_mem_req_valid</p>
+          </td>
+          <td rowspan="5">
+            <p>
+              <strong>type</strong>: logic, output</p>
+            <p>
+              <strong>dim</strong>: [0:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#28">src/memory_controller.v, 28:53</a>
+            </p>
+          </td>
+          <td>
+            <h4>w_state</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#w_state">instruction_cache.cache_miss_handler_m.mem_ctrl.w_state</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#179">src/memory_controller.v:179</a>
+            </p>
+          </td>
+          <td>
+            <h4>o_mem_if_req_valid</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.html#o_mem_if_req_valid">instruction_cache.cache_miss_handler_m.o_mem_if_req_valid</a>
+            </p>
+            <p>Examine RTL: <a href="src__cache_miss_handler.v.html#195">src/cache_miss_handler.v:195</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <h4>r_state</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#r_state">instruction_cache.cache_miss_handler_m.mem_ctrl.r_state</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#179">src/memory_controller.v:179</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <h4>i_block_addr_valid</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#i_block_addr_valid">instruction_cache.cache_miss_handler_m.mem_ctrl.i_block_addr_valid</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#179">src/memory_controller.v:179</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'sh1</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#179">src/memory_controller.v:179</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'sh1</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#179">src/memory_controller.v:179</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="5" id="o_mem_ready">
+            <p>o_mem_ready</p>
+          </td>
+          <td rowspan="5">
+            <p>
+              <strong>type</strong>: logic, output</p>
+            <p>
+              <strong>dim</strong>: [0:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#29">src/memory_controller.v, 29:53</a>
+            </p>
+          </td>
+          <td>
+            <h4>r_state</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#r_state">instruction_cache.cache_miss_handler_m.mem_ctrl.r_state</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#181">src/memory_controller.v:181</a>
+            </p>
+          </td>
+          <td>
+            <h4>o_mem_if_ready</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.html#o_mem_if_ready">instruction_cache.cache_miss_handler_m.o_mem_if_ready</a>
+            </p>
+            <p>Examine RTL: <a href="src__cache_miss_handler.v.html#196">src/cache_miss_handler.v:196</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <h4>w_state</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#w_state">instruction_cache.cache_miss_handler_m.mem_ctrl.w_state</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#181">src/memory_controller.v:181</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <h4>i_halt</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#i_halt">instruction_cache.cache_miss_handler_m.mem_ctrl.i_halt</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#181">src/memory_controller.v:181</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'sh1</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#181">src/memory_controller.v:181</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'sh2</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#181">src/memory_controller.v:181</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="3" id="o_mem_data_received">
+            <p>o_mem_data_received</p>
+          </td>
+          <td rowspan="3">
+            <p>
+              <strong>type</strong>: logic, output</p>
+            <p>
+              <strong>dim</strong>: [0:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#31">src/memory_controller.v, 31:53</a>
+            </p>
+          </td>
+          <td>
+            <h4>w_all_words_received</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#w_all_words_received">instruction_cache.cache_miss_handler_m.mem_ctrl.w_all_words_received</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#182">src/memory_controller.v:182</a>
+            </p>
+          </td>
+          <td>
+            <h4>mc_cu_mem_data_received</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.html#mc_cu_mem_data_received">instruction_cache.cache_miss_handler_m.mc_cu_mem_data_received</a>
+            </p>
+            <p>Examine RTL: <a href="src__cache_miss_handler.v.html#198">src/cache_miss_handler.v:198</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <h4>r_state</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#r_state">instruction_cache.cache_miss_handler_m.mem_ctrl.r_state</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#182">src/memory_controller.v:182</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'sh2</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#182">src/memory_controller.v:182</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="o_mem_data_rcvd_valid">
+            <p>o_mem_data_rcvd_valid</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic, output</p>
+            <p>
+              <strong>dim</strong>: [0:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#32">src/memory_controller.v, 32:53</a>
+            </p>
+          </td>
+          <td>
+            <h4>i_halt</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#i_halt">instruction_cache.cache_miss_handler_m.mem_ctrl.i_halt</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#183">src/memory_controller.v:183</a>
+            </p>
+          </td>
+          <td>
+            <h4>mc_cu_mem_if_valid</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.html#mc_cu_mem_if_valid">instruction_cache.cache_miss_handler_m.mc_cu_mem_if_valid</a>
+            </p>
+            <p>Examine RTL: <a href="src__cache_miss_handler.v.html#199">src/cache_miss_handler.v:199</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="o_ir_ready">
+            <p>o_ir_ready</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic, output</p>
+            <p>
+              <strong>dim</strong>: [0:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#33">src/memory_controller.v, 33:53</a>
+            </p>
+          </td>
+          <td>
+            <h4>o_ready</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.memory_buffer_m.html#o_ready">instruction_cache.cache_miss_handler_m.mem_ctrl.memory_buffer_m.o_ready</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#81">src/memory_controller.v:81</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="o_mem_block_data">
+            <p>o_mem_block_data</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic, output</p>
+            <p>
+              <strong>dim</strong>: [319:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#35">src/memory_controller.v, 35:53</a>
+            </p>
+          </td>
+          <td>
+            <p>320'h0</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#139">src/memory_controller.v:139</a>
+            </p>
+          </td>
+          <td>
+            <h4>mc_mem_block_data</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.html#mc_mem_block_data">instruction_cache.cache_miss_handler_m.mc_mem_block_data</a>
+            </p>
+            <p>Examine RTL: <a href="src__cache_miss_handler.v.html#202">src/cache_miss_handler.v:202</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="2" id="o_mem_num_words_rcvd">
+            <p>o_mem_num_words_rcvd</p>
+          </td>
+          <td rowspan="2">
+            <p>
+              <strong>type</strong>: logic, output</p>
+            <p>
+              <strong>dim</strong>: [4:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#36">src/memory_controller.v, 36:53</a>
+            </p>
+          </td>
+          <td>
+            <h4>r_transactions_counter</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#r_transactions_counter">instruction_cache.cache_miss_handler_m.mem_ctrl.r_transactions_counter</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#93">src/memory_controller.v:93</a>
+            </p>
+          </td>
+          <td>
+            <h4>mc_mem_num_words_rcvd</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.html#mc_mem_num_words_rcvd">instruction_cache.cache_miss_handler_m.mc_mem_num_words_rcvd</a>
+            </p>
+            <p>Examine RTL: <a href="src__cache_miss_handler.v.html#203">src/cache_miss_handler.v:203</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'sh2</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#93">src/memory_controller.v:93</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="2" id="o_mem_block_data_valid">
+            <p>o_mem_block_data_valid</p>
+          </td>
+          <td rowspan="2">
+            <p>
+              <strong>type</strong>: logic, output</p>
+            <p>
+              <strong>dim</strong>: [0:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#37">src/memory_controller.v, 37:53</a>
+            </p>
+          </td>
+          <td>
+            <h4>w_all_words_received</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#w_all_words_received">instruction_cache.cache_miss_handler_m.mem_ctrl.w_all_words_received</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#161">src/memory_controller.v:161</a>
+            </p>
+          </td>
+          <td>
+            <h4>mc_mem_block_data_valid</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.html#mc_mem_block_data_valid">instruction_cache.cache_miss_handler_m.mc_mem_block_data_valid</a>
+            </p>
+            <p>Examine RTL: <a href="src__cache_miss_handler.v.html#204">src/cache_miss_handler.v:204</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <h4>r_mem_block_data_valid</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#r_mem_block_data_valid">instruction_cache.cache_miss_handler_m.mem_ctrl.r_mem_block_data_valid</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#161">src/memory_controller.v:161</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="ADDR_WIDTH">
+            <p>ADDR_WIDTH</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic, localparam</p>
+            <p>
+              <strong>dim</strong>: [31:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#40">src/memory_controller.v, 40:16</a>
+            </p>
+          </td>
+          <td>
+            <p>32'sh10</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#40">src/memory_controller.v:40</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="EXT_MEM_DATA_WIDTH">
+            <p>EXT_MEM_DATA_WIDTH</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic, localparam</p>
+            <p>
+              <strong>dim</strong>: [31:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#41">src/memory_controller.v, 41:16</a>
+            </p>
+          </td>
+          <td>
+            <p>32'sh28</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#41">src/memory_controller.v:41</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="INT_MEM_DATA_WIDTH">
+            <p>INT_MEM_DATA_WIDTH</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic, localparam</p>
+            <p>
+              <strong>dim</strong>: [31:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#42">src/memory_controller.v, 42:16</a>
+            </p>
+          </td>
+          <td>
+            <p>32'sh50</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#42">src/memory_controller.v:42</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="MEM_BLOCK_DATA_WIDTH">
+            <p>MEM_BLOCK_DATA_WIDTH</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic, localparam</p>
+            <p>
+              <strong>dim</strong>: [31:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#43">src/memory_controller.v, 43:16</a>
+            </p>
+          </td>
+          <td>
+            <p>32'sh140</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#43">src/memory_controller.v:43</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="NUM_MEM_TRANSACTIONS">
+            <p>NUM_MEM_TRANSACTIONS</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic, localparam</p>
+            <p>
+              <strong>dim</strong>: [31:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#45">src/memory_controller.v, 45:17</a>
+            </p>
+          </td>
+          <td>
+            <p>32'sh4</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#45">src/memory_controller.v:45</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="NUM_WORDS_P_BLOCK">
+            <p>NUM_WORDS_P_BLOCK</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic, localparam</p>
+            <p>
+              <strong>dim</strong>: [31:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#46">src/memory_controller.v, 46:17</a>
+            </p>
+          </td>
+          <td>
+            <p>32'sh10</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#46">src/memory_controller.v:46</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="STATE_IDLE">
+            <p>STATE_IDLE</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic, localparam</p>
+            <p>
+              <strong>dim</strong>: [31:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#48">src/memory_controller.v, 48:16</a>
+            </p>
+          </td>
+          <td>
+            <p>32'sh0</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#48">src/memory_controller.v:48</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="STATE_MEM_REQUESTED">
+            <p>STATE_MEM_REQUESTED</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic, localparam</p>
+            <p>
+              <strong>dim</strong>: [31:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#49">src/memory_controller.v, 49:16</a>
+            </p>
+          </td>
+          <td>
+            <p>32'sh1</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#49">src/memory_controller.v:49</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="STATE_MEM_RECEIVING">
+            <p>STATE_MEM_RECEIVING</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic, localparam</p>
+            <p>
+              <strong>dim</strong>: [31:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#50">src/memory_controller.v, 50:16</a>
+            </p>
+          </td>
+          <td>
+            <p>32'sh2</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#50">src/memory_controller.v:50</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="NUM_STATES">
+            <p>NUM_STATES</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic, localparam</p>
+            <p>
+              <strong>dim</strong>: [31:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#51">src/memory_controller.v, 51:16</a>
+            </p>
+          </td>
+          <td>
+            <p>32'sh3</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#51">src/memory_controller.v:51</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="mb_mem_data">
+            <p>mb_mem_data</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic</p>
+            <p>
+              <strong>dim</strong>: [79:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#68">src/memory_controller.v, 68:37</a>
+            </p>
+          </td>
+          <td>
+            <h4>o_mem_data</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.memory_buffer_m.html#o_mem_data">instruction_cache.cache_miss_handler_m.mem_ctrl.memory_buffer_m.o_mem_data</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#79">src/memory_controller.v:79</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="1" id="mb_mem_data_valid">
+            <p>mb_mem_data_valid</p>
+          </td>
+          <td rowspan="1">
+            <p>
+              <strong>type</strong>: logic</p>
+            <p>
+              <strong>dim</strong>: [0:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#69">src/memory_controller.v, 69:37</a>
+            </p>
+          </td>
+          <td>
+            <h4>o_mem_data_valid</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.memory_buffer_m.html#o_mem_data_valid">instruction_cache.cache_miss_handler_m.mem_ctrl.memory_buffer_m.o_mem_data_valid</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#80">src/memory_controller.v:80</a>
+            </p>
+          </td>
+          <td>
+            <h4>w_state</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#w_state">instruction_cache.cache_miss_handler_m.mem_ctrl.w_state</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#111">src/memory_controller.v:111</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="4" id="r_state">
+            <p>r_state</p>
+          </td>
+          <td rowspan="4">
+            <p>
+              <strong>type</strong>: logic</p>
+            <p>
+              <strong>dim</strong>: [1:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#86">src/memory_controller.v, 86:37</a>
+            </p>
+          </td>
+          <td>
+            <h4>w_state</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#w_state">instruction_cache.cache_miss_handler_m.mem_ctrl.w_state</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#100">src/memory_controller.v:100</a>
+            </p>
+          </td>
+          <td>
+            <h4>o_mem_req_addr</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#o_mem_req_addr">instruction_cache.cache_miss_handler_m.mem_ctrl.o_mem_req_addr</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#176">src/memory_controller.v:176</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>2'h0</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#97">src/memory_controller.v:97</a>
+            </p>
+          </td>
+          <td>
+            <h4>o_mem_req_valid</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#o_mem_req_valid">instruction_cache.cache_miss_handler_m.mem_ctrl.o_mem_req_valid</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#179">src/memory_controller.v:179</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>None</p>
+          </td>
+          <td>
+            <h4>o_mem_ready</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#o_mem_ready">instruction_cache.cache_miss_handler_m.mem_ctrl.o_mem_ready</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#181">src/memory_controller.v:181</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>None</p>
+          </td>
+          <td>
+            <h4>o_mem_data_received</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#o_mem_data_received">instruction_cache.cache_miss_handler_m.mem_ctrl.o_mem_data_received</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#182">src/memory_controller.v:182</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="17" id="w_state">
+            <p>w_state</p>
+          </td>
+          <td rowspan="17">
+            <p>
+              <strong>type</strong>: logic</p>
+            <p>
+              <strong>dim</strong>: [1:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#87">src/memory_controller.v, 87:37</a>
+            </p>
+          </td>
+          <td>
+            <h4>i_initiate_req</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#i_initiate_req">instruction_cache.cache_miss_handler_m.mem_ctrl.i_initiate_req</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#108">src/memory_controller.v:108</a>
+            </p>
+          </td>
+          <td>
+            <h4>o_mem_req_addr</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#o_mem_req_addr">instruction_cache.cache_miss_handler_m.mem_ctrl.o_mem_req_addr</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#176">src/memory_controller.v:176</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <h4>i_ir_valid</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#i_ir_valid">instruction_cache.cache_miss_handler_m.mem_ctrl.i_ir_valid</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#108">src/memory_controller.v:108</a>
+            </p>
+          </td>
+          <td>
+            <h4>o_mem_req_valid</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#o_mem_req_valid">instruction_cache.cache_miss_handler_m.mem_ctrl.o_mem_req_valid</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#179">src/memory_controller.v:179</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'sh1</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#108">src/memory_controller.v:108</a>
+            </p>
+          </td>
+          <td>
+            <h4>o_mem_ready</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#o_mem_ready">instruction_cache.cache_miss_handler_m.mem_ctrl.o_mem_ready</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#181">src/memory_controller.v:181</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'sh0</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#108">src/memory_controller.v:108</a>
+            </p>
+          </td>
+          <td>
+            <h4>r_state</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#r_state">instruction_cache.cache_miss_handler_m.mem_ctrl.r_state</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#100">src/memory_controller.v:100</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'h0</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#108">src/memory_controller.v:108</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'h2</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#108">src/memory_controller.v:108</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <h4>mb_mem_data_valid</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#mb_mem_data_valid">instruction_cache.cache_miss_handler_m.mem_ctrl.mb_mem_data_valid</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#111">src/memory_controller.v:111</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'sh2</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#111">src/memory_controller.v:111</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'sh1</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#111">src/memory_controller.v:111</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'h0</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#111">src/memory_controller.v:111</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'h2</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#111">src/memory_controller.v:111</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <h4>w_all_words_received</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#w_all_words_received">instruction_cache.cache_miss_handler_m.mem_ctrl.w_all_words_received</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#114">src/memory_controller.v:114</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'sh0</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#114">src/memory_controller.v:114</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'sh2</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#114">src/memory_controller.v:114</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'h0</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#114">src/memory_controller.v:114</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'h2</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#114">src/memory_controller.v:114</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>2'h0</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#118">src/memory_controller.v:118</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="8" id="r_transactions_counter">
+            <p>r_transactions_counter</p>
+          </td>
+          <td rowspan="8">
+            <p>
+              <strong>type</strong>: logic</p>
+            <p>
+              <strong>dim</strong>: [2:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#89">src/memory_controller.v, 89:42</a>
+            </p>
+          </td>
+          <td>
+            <h4>r_transactions_counter</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#r_transactions_counter">instruction_cache.cache_miss_handler_m.mem_ctrl.r_transactions_counter</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#132">src/memory_controller.v:132</a>
+            </p>
+          </td>
+          <td>
+            <h4>w_all_words_received</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#w_all_words_received">instruction_cache.cache_miss_handler_m.mem_ctrl.w_all_words_received</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#92">src/memory_controller.v:92</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <h4>r_transactions_counter</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#r_transactions_counter">instruction_cache.cache_miss_handler_m.mem_ctrl.r_transactions_counter</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#133">src/memory_controller.v:133</a>
+            </p>
+          </td>
+          <td>
+            <h4>o_mem_num_words_rcvd</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#o_mem_num_words_rcvd">instruction_cache.cache_miss_handler_m.mem_ctrl.o_mem_num_words_rcvd</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#93">src/memory_controller.v:93</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'sh4</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#132">src/memory_controller.v:132</a>
+            </p>
+          </td>
+          <td>
+            <h4>r_transactions_counter</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#r_transactions_counter">instruction_cache.cache_miss_handler_m.mem_ctrl.r_transactions_counter</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#132">src/memory_controller.v:132</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'h0</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#132">src/memory_controller.v:132</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'sh1</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#133">src/memory_controller.v:133</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'h0</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#132">src/memory_controller.v:132</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'h3</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#132">src/memory_controller.v:132</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>3'h0</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#125">src/memory_controller.v:125</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="3" id="w_all_words_received">
+            <p>w_all_words_received</p>
+          </td>
+          <td rowspan="3">
+            <p>
+              <strong>type</strong>: logic</p>
+            <p>
+              <strong>dim</strong>: [0:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#90">src/memory_controller.v, 90:10</a>
+            </p>
+          </td>
+          <td>
+            <h4>r_transactions_counter</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#r_transactions_counter">instruction_cache.cache_miss_handler_m.mem_ctrl.r_transactions_counter</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#92">src/memory_controller.v:92</a>
+            </p>
+          </td>
+          <td>
+            <h4>o_mem_block_data_valid</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#o_mem_block_data_valid">instruction_cache.cache_miss_handler_m.mem_ctrl.o_mem_block_data_valid</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#161">src/memory_controller.v:161</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>32'sh4</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#92">src/memory_controller.v:92</a>
+            </p>
+          </td>
+          <td>
+            <h4>o_mem_data_received</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#o_mem_data_received">instruction_cache.cache_miss_handler_m.mem_ctrl.o_mem_data_received</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#182">src/memory_controller.v:182</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>None</p>
+          </td>
+          <td>
+            <h4>w_state</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#w_state">instruction_cache.cache_miss_handler_m.mem_ctrl.w_state</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#114">src/memory_controller.v:114</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="3" id="r_mem_block_data_valid">
+            <p>r_mem_block_data_valid</p>
+          </td>
+          <td rowspan="3">
+            <p>
+              <strong>type</strong>: logic</p>
+            <p>
+              <strong>dim</strong>: [0:0]</p>
+            <p>
+              <strong>loc</strong>: <a href="src__memory_controller.v.html#160">src/memory_controller.v, 160:9</a>
+            </p>
+          </td>
+          <td>
+            <p>1'h1</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#168">src/memory_controller.v:168</a>
+            </p>
+          </td>
+          <td>
+            <h4>o_mem_block_data_valid</h4>
+            <p>
+              <a href="instruction_cache.cache_miss_handler_m.mem_ctrl.html#o_mem_block_data_valid">instruction_cache.cache_miss_handler_m.mem_ctrl.o_mem_block_data_valid</a>
+            </p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#161">src/memory_controller.v:161</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>1'h0</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#171">src/memory_controller.v:171</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>1'h0</p>
+            <p>Examine RTL: <a href="src__memory_controller.v.html#164">src/memory_controller.v:164</a>
+            </p>
+          </td>
+          <td>
+            <p>None</p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+  <p>
+    <a href="index.html">Design Hierarchy Index</a>
+  </p>
+</html>

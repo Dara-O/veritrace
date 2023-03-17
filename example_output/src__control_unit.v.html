@@ -1,0 +1,94 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="rtl_html_style.css">
+  </head>
+  <body>
+    <p>File path: src/control_unit.v</p>
+    <hr>
+    <pre class="code">
+<code id="1">`timescale <span class="hljs-const">1</span>ns<span class="hljs-operator">/</span><span class="hljs-const">1</span>ps</code>
+<code id="2"></code>
+<code id="3"><span class="hljs-keyword">module</span> control_unit <span class="hljs-operator">(</span></code>
+<code id="4">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    i_cache_hit<span class="hljs-operator">,</span></code>
+<code id="5">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    i_valid<span class="hljs-operator">,</span> </code>
+<code id="6">    </code>
+<code id="7">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    i_mem_data_received<span class="hljs-operator">,</span></code>
+<code id="8">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    i_mem_if_valid<span class="hljs-operator">,</span></code>
+<code id="9"></code>
+<code id="10">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    i_arrays_update_complete<span class="hljs-operator">,</span></code>
+<code id="11">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    i_auc_valid<span class="hljs-operator">,</span></code>
+<code id="12"></code>
+<code id="13">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    clk<span class="hljs-operator">,</span></code>
+<code id="14">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    arst_n<span class="hljs-operator">,</span> </code>
+<code id="15">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    i_halt<span class="hljs-operator">,</span> </code>
+<code id="16"></code>
+<code id="17">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    o_miss_state<span class="hljs-operator">,</span></code>
+<code id="18">    </code>
+<code id="19">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    o_initiate_mem_req<span class="hljs-operator">,</span></code>
+<code id="20">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    o_mem_if_valid<span class="hljs-operator">,</span></code>
+<code id="21"></code>
+<code id="22">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    o_initiate_array_update<span class="hljs-operator">,</span></code>
+<code id="23">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    o_send_missed_word<span class="hljs-operator">,</span></code>
+<code id="24">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    o_valid<span class="hljs-operator">,</span></code>
+<code id="25">    </code>
+<code id="26">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    o_mem_if_ready<span class="hljs-operator">,</span></code>
+<code id="27">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    o_arrays_updater_ready<span class="hljs-operator">,</span></code>
+<code id="28">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    o_ready</code>
+<code id="29"><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="30"></code>
+<code id="31">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">STATE_IDLE</span>               <span class="hljs-operator">=</span> <span class="hljs-const">0</span><span class="hljs-operator">;</span></code>
+<code id="32">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">STATE_MEM_REQ</span>            <span class="hljs-operator">=</span> <span class="hljs-const">1</span><span class="hljs-operator">;</span></code>
+<code id="33">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">STATE_ARRAY_UPDATE</span>       <span class="hljs-operator">=</span> <span class="hljs-const">2</span><span class="hljs-operator">;</span></code>
+<code id="34">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">NUM_STATES</span>               <span class="hljs-operator">=</span> <span class="hljs-const">3</span><span class="hljs-operator">;</span></code>
+<code id="35"></code>
+<code id="36">    <span class="hljs-keyword">reg</span>     <span class="hljs-operator">[</span>$clog2<span class="hljs-operator">(</span><span class="hljs-const">NUM_STATES</span><span class="hljs-operator">)</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>    r_state<span class="hljs-operator">;</span></code>
+<code id="37">    <span class="hljs-keyword">reg</span>     <span class="hljs-operator">[</span>$clog2<span class="hljs-operator">(</span><span class="hljs-const">NUM_STATES</span><span class="hljs-operator">)</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>    w_state<span class="hljs-operator">;</span></code>
+<code id="38">    </code>
+<code id="39"></code>
+<code id="40">    <span class="hljs-keyword">assign</span> o_ready <span class="hljs-operator">=</span> <span class="hljs-operator">~</span><span class="hljs-operator">(</span>i_halt <span class="hljs-operator">|</span> o_miss_state<span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="41">    <span class="hljs-keyword">assign</span> o_arrays_updater_ready <span class="hljs-operator">=</span> <span class="hljs-operator">~</span>i_halt<span class="hljs-operator">;</span></code>
+<code id="42">    </code>
+<code id="43">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span><span class="hljs-keyword">posedge</span> clk<span class="hljs-operator">,</span> <span class="hljs-keyword">negedge</span> arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="44">        <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="45">            r_state <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-operator">{</span>$clog2<span class="hljs-operator">(</span><span class="hljs-const">NUM_STATES</span><span class="hljs-operator">)</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="46">        <span class="hljs-keyword">end</span></code>
+<code id="47">        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>i_halt<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="48">            r_state <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> w_state<span class="hljs-operator">;</span></code>
+<code id="49">        <span class="hljs-keyword">end</span></code>
+<code id="50">    <span class="hljs-keyword">end</span></code>
+<code id="51"></code>
+<code id="52">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span>*<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="53">        <span class="hljs-keyword">case</span> <span class="hljs-operator">(</span>r_state<span class="hljs-operator">)</span></code>
+<code id="54">            <span class="hljs-const">STATE_IDLE</span>  <span class="hljs-operator">:</span>   <span class="hljs-keyword">begin</span></code>
+<code id="55">                w_state <span class="hljs-operator">=</span> <span class="hljs-operator">(</span><span class="hljs-operator">~</span>i_cache_hit <span class="hljs-operator">&amp;</span> i_valid<span class="hljs-operator">)</span> ? <span class="hljs-const">STATE_MEM_REQ</span> <span class="hljs-operator">:</span> <span class="hljs-const">STATE_IDLE</span><span class="hljs-operator">;</span></code>
+<code id="56">            <span class="hljs-keyword">end</span> </code>
+<code id="57"></code>
+<code id="58">            <span class="hljs-const">STATE_MEM_REQ</span> <span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="59">                w_state <span class="hljs-operator">=</span> <span class="hljs-operator">(</span>i_mem_data_received <span class="hljs-operator">&amp;</span> i_mem_if_valid<span class="hljs-operator">)</span> ? <span class="hljs-const">STATE_ARRAY_UPDATE</span> <span class="hljs-operator">:</span> <span class="hljs-const">STATE_MEM_REQ</span><span class="hljs-operator">;</span></code>
+<code id="60">            <span class="hljs-keyword">end</span></code>
+<code id="61"></code>
+<code id="62">            <span class="hljs-const">STATE_ARRAY_UPDATE</span> <span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="63">                w_state <span class="hljs-operator">=</span> <span class="hljs-operator">(</span>i_arrays_update_complete <span class="hljs-operator">&amp;</span> i_auc_valid<span class="hljs-operator">)</span> ? <span class="hljs-const">STATE_IDLE</span> <span class="hljs-operator">:</span> <span class="hljs-const">STATE_ARRAY_UPDATE</span><span class="hljs-operator">;</span></code>
+<code id="64">            <span class="hljs-keyword">end</span></code>
+<code id="65">            <span class="hljs-keyword">default</span><span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="66">                w_state <span class="hljs-operator">=</span> <span class="hljs-const">STATE_IDLE</span><span class="hljs-operator">;</span></code>
+<code id="67">            <span class="hljs-keyword">end</span></code>
+<code id="68">        <span class="hljs-keyword">endcase</span></code>
+<code id="69">    <span class="hljs-keyword">end</span></code>
+<code id="70"></code>
+<code id="71">    <span class="hljs-keyword">assign</span> o_miss_state         <span class="hljs-operator">=</span> <span class="hljs-operator">(</span>w_state <span class="hljs-operator">!=</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_IDLE</span><span class="hljs-operator">)</span><span class="hljs-operator">;</span> </code>
+<code id="72">    </code>
+<code id="73">    <span class="hljs-keyword">assign</span> o_initiate_mem_req   <span class="hljs-operator">=</span> <span class="hljs-operator">(</span>w_state <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_MEM_REQ</span><span class="hljs-operator">)</span> <span class="hljs-operator">&amp;</span> <span class="hljs-operator">(</span>r_state <span class="hljs-operator">!=</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_MEM_REQ</span><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="74">    <span class="hljs-keyword">assign</span> o_mem_if_valid       <span class="hljs-operator">=</span> <span class="hljs-operator">(</span>w_state <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_MEM_REQ</span><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="75">    <span class="hljs-keyword">assign</span> o_mem_if_ready       <span class="hljs-operator">=</span> <span class="hljs-operator">(</span>w_state <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_MEM_REQ</span><span class="hljs-operator">)</span> <span class="hljs-operator">&amp;</span> <span class="hljs-operator">~</span>i_halt<span class="hljs-operator">;</span></code>
+<code id="76"></code>
+<code id="77">    <span class="hljs-keyword">assign</span> o_initiate_array_update <span class="hljs-operator">=</span> <span class="hljs-operator">(</span>w_state <span class="hljs-operator">!=</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_IDLE</span><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="78">    <span class="hljs-keyword">assign</span> o_send_missed_word   <span class="hljs-operator">=</span> <span class="hljs-operator">(</span>w_state <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_IDLE</span><span class="hljs-operator">)</span> <span class="hljs-operator">&amp;</span> <span class="hljs-operator">(</span>r_state <span class="hljs-operator">!=</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_IDLE</span><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="79">    </code>
+<code id="80">    <span class="hljs-keyword">assign</span> o_valid <span class="hljs-operator">=</span> <span class="hljs-operator">(</span>w_state <span class="hljs-operator">!=</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_IDLE</span><span class="hljs-operator">)</span> <span class="hljs-operator">|</span> <span class="hljs-operator">(</span>r_state <span class="hljs-operator">!=</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_IDLE</span><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="81"></code>
+<code id="82"></code>
+<code id="83"><span class="hljs-keyword">endmodule</span></code>
+</pre>
+  </body>
+</html>

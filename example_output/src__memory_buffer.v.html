@@ -1,0 +1,74 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="rtl_html_style.css">
+  </head>
+  <body>
+    <p>File path: src/memory_buffer.v</p>
+    <hr>
+    <pre class="code">
+<code id="1">`timescale <span class="hljs-const">1</span>ns<span class="hljs-operator">/</span><span class="hljs-const">1</span>ps</code>
+<code id="2"></code>
+<code id="3"><span class="hljs-operator">/</span>*</code>
+<code id="4">    <span class="hljs-const">U</span>sage <span class="hljs-const">N</span>ote<span class="hljs-operator">:</span></code>
+<code id="5">    <span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span></code>
+<code id="6">    <span class="hljs-const">T</span>he data received on the falling <span class="hljs-keyword">edge</span> is <span class="hljs-keyword">always</span> assumed to be the lower half <span class="hljs-operator">(</span>bits <span class="hljs-const">39</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">)</span></code>
+<code id="7">    <span class="hljs-const">A</span> complete packet consists of sending bits <span class="hljs-operator">[</span><span class="hljs-const">39</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> on the falling <span class="hljs-keyword">edge</span> <span class="hljs-keyword">and</span> bits <span class="hljs-operator">[</span><span class="hljs-const">79</span><span class="hljs-operator">:</span><span class="hljs-const">40</span><span class="hljs-operator">]</span>...</code>
+<code id="8">    ...on the rising <span class="hljs-keyword">edge</span>. </code>
+<code id="9">    <span class="hljs-const">F</span>or the packet to be valid<span class="hljs-operator">,</span> the valid <span class="hljs-keyword">bit</span> has to be asserted <span class="hljs-keyword">for</span> both rising <span class="hljs-keyword">and</span> falling edges.</code>
+<code id="10">    </code>
+<code id="11">*<span class="hljs-operator">/</span></code>
+<code id="12"></code>
+<code id="13"><span class="hljs-keyword">module</span> memory_buffer<span class="hljs-operator">(</span></code>
+<code id="14">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">EXT_MEM_DATA_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>    i_mem_data<span class="hljs-operator">,</span></code>
+<code id="15">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                i_mem_data_valid<span class="hljs-operator">,</span></code>
+<code id="16"></code>
+<code id="17">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                clk<span class="hljs-operator">,</span></code>
+<code id="18">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                arst_n<span class="hljs-operator">,</span> </code>
+<code id="19">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                i_halt<span class="hljs-operator">,</span></code>
+<code id="20"></code>
+<code id="21">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">INT_MEM_DATA_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>    o_mem_data<span class="hljs-operator">,</span></code>
+<code id="22">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                                o_mem_data_valid<span class="hljs-operator">,</span></code>
+<code id="23">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                                o_ready</code>
+<code id="24"><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="25"></code>
+<code id="26">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">EXT_MEM_DATA_WIDTH</span> <span class="hljs-operator">=</span> <span class="hljs-const">40</span><span class="hljs-operator">;</span></code>
+<code id="27">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">INT_MEM_DATA_WIDTH</span> <span class="hljs-operator">=</span> <span class="hljs-const">80</span><span class="hljs-operator">;</span></code>
+<code id="28"></code>
+<code id="29">    <span class="hljs-keyword">assign</span> o_ready <span class="hljs-operator">=</span> <span class="hljs-operator">~</span>i_halt<span class="hljs-operator">;</span></code>
+<code id="30">  </code>
+<code id="31">    <span class="hljs-keyword">reg</span> r_mem_data_valid_pos<span class="hljs-operator">;</span></code>
+<code id="32">    <span class="hljs-keyword">reg</span> r_mem_data_valid_neg<span class="hljs-operator">;</span></code>
+<code id="33"></code>
+<code id="34">    <span class="hljs-keyword">assign</span> o_mem_data_valid <span class="hljs-operator">=</span> r_mem_data_valid_pos <span class="hljs-operator">&amp;</span> r_mem_data_valid_neg<span class="hljs-operator">;</span> <span class="hljs-comment">// full packet received</span></code>
+<code id="35"></code>
+<code id="36">    <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span><span class="hljs-const">EXT_MEM_DATA_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> r_mem_data_pos<span class="hljs-operator">;</span></code>
+<code id="37">    <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span><span class="hljs-const">EXT_MEM_DATA_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> r_mem_data_neg<span class="hljs-operator">;</span></code>
+<code id="38"></code>
+<code id="39">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span><span class="hljs-keyword">posedge</span> clk<span class="hljs-operator">,</span> <span class="hljs-keyword">negedge</span> arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="40">        <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="41">            r_mem_data_pos <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">EXT_MEM_DATA_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="42">            r_mem_data_valid_pos <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="43">        <span class="hljs-keyword">end</span></code>
+<code id="44">        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>i_halt<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="45">            r_mem_data_pos <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> i_mem_data<span class="hljs-operator">;</span></code>
+<code id="46">            r_mem_data_valid_pos <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> i_mem_data_valid<span class="hljs-operator">;</span></code>
+<code id="47">        <span class="hljs-keyword">end</span></code>
+<code id="48">    <span class="hljs-keyword">end</span></code>
+<code id="49"></code>
+<code id="50">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span><span class="hljs-keyword">negedge</span> clk<span class="hljs-operator">,</span> <span class="hljs-keyword">negedge</span> arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="51">        <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="52">            r_mem_data_neg <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">EXT_MEM_DATA_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="53">            r_mem_data_valid_neg <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="54">        <span class="hljs-keyword">end</span></code>
+<code id="55">        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>i_halt<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="56">            r_mem_data_neg <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> i_mem_data<span class="hljs-operator">;</span></code>
+<code id="57">            r_mem_data_valid_neg <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> i_mem_data_valid<span class="hljs-operator">;</span></code>
+<code id="58">        <span class="hljs-keyword">end</span></code>
+<code id="59">    <span class="hljs-keyword">end</span></code>
+<code id="60"></code>
+<code id="61">    <span class="hljs-keyword">assign</span> o_mem_data <span class="hljs-operator">=</span> <span class="hljs-operator">{</span>r_mem_data_pos<span class="hljs-operator">,</span> r_mem_data_neg<span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="62"></code>
+<code id="63"><span class="hljs-keyword">endmodule</span></code>
+</pre>
+  </body>
+</html>

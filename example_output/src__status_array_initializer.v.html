@@ -1,0 +1,153 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="rtl_html_style.css">
+  </head>
+  <body>
+    <p>File path: src/status_array_initializer.v</p>
+    <hr>
+    <pre class="code">
+<code id="1">`timescale <span class="hljs-const">1</span>ns<span class="hljs-operator">/</span><span class="hljs-const">1</span>ps</code>
+<code id="2"></code>
+<code id="3"><span class="hljs-keyword">module</span> status_array_initializer<span class="hljs-operator">(</span></code>
+<code id="4">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                            clk<span class="hljs-operator">,</span></code>
+<code id="5">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                            arst_n<span class="hljs-operator">,</span></code>
+<code id="6">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                            i_halt<span class="hljs-operator">,</span></code>
+<code id="7"></code>
+<code id="8">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">reg</span>     <span class="hljs-operator">[</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>        o_addr<span class="hljs-operator">,</span></code>
+<code id="9">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">reg</span>     <span class="hljs-operator">[</span><span class="hljs-const">ROW_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>         o_data<span class="hljs-operator">,</span></code>
+<code id="10">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">reg</span>                             o_wen<span class="hljs-operator">,</span> </code>
+<code id="11">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">reg</span>     <span class="hljs-operator">[</span><span class="hljs-const">NUM_BLOCKS</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>        o_wmask<span class="hljs-operator">,</span></code>
+<code id="12">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">reg</span>                             o_valid<span class="hljs-operator">,</span></code>
+<code id="13"></code>
+<code id="14">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                            o_init_complete<span class="hljs-operator">,</span></code>
+<code id="15">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                            o_ready</code>
+<code id="16"><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="17"></code>
+<code id="18">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">NUM_ROWS</span>     <span class="hljs-operator">=</span> <span class="hljs-const">16</span><span class="hljs-operator">;</span></code>
+<code id="19">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">ADDR_WIDTH</span>   <span class="hljs-operator">=</span> <span class="hljs-const">4</span><span class="hljs-operator">;</span> <span class="hljs-comment">// $clog2(NUM_ROWS)</span></code>
+<code id="20">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">NUM_BLOCKS</span>   <span class="hljs-operator">=</span> <span class="hljs-const">4</span><span class="hljs-operator">;</span></code>
+<code id="21">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">BLOCK_WIDTH</span>  <span class="hljs-operator">=</span> <span class="hljs-const">2</span><span class="hljs-operator">;</span></code>
+<code id="22">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">ROW_WIDTH</span>    <span class="hljs-operator">=</span> <span class="hljs-const">4</span>*<span class="hljs-const">2</span><span class="hljs-operator">;</span> <span class="hljs-comment">// NUM_BLOCKS*BLOCK_WIDTH</span></code>
+<code id="23"></code>
+<code id="24">    <span class="hljs-comment">// for use in understanding status_array_data</span></code>
+<code id="25">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">USE_BIT_IDX</span>      <span class="hljs-operator">=</span> <span class="hljs-const">0</span><span class="hljs-operator">;</span> </code>
+<code id="26">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">VALID_BIT_IDX</span>    <span class="hljs-operator">=</span> <span class="hljs-const">1</span><span class="hljs-operator">;</span></code>
+<code id="27"></code>
+<code id="28">    <span class="hljs-keyword">wire</span> gated_clk<span class="hljs-operator">;</span></code>
+<code id="29">    clock_gater cg <span class="hljs-operator">(</span></code>
+<code id="30">        .clk<span class="hljs-operator">(</span>clk<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="31">        .stop_clock<span class="hljs-operator">(</span>i_halt<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="32">        .gated_clock<span class="hljs-operator">(</span>gated_clk<span class="hljs-operator">)</span></code>
+<code id="33">    <span class="hljs-operator">)</span><span class="hljs-operator">;</span>  </code>
+<code id="34"></code>
+<code id="35">    <span class="hljs-keyword">localparam</span> <span class="hljs-operator">[</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> <span class="hljs-const">_STATE_UNINIT</span> <span class="hljs-operator">=</span> <span class="hljs-const">0</span><span class="hljs-operator">;</span> <span class="hljs-comment">// uninitialized state</span></code>
+<code id="36">    <span class="hljs-keyword">localparam</span> <span class="hljs-operator">[</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> <span class="hljs-const">_STATE_BUSY</span> <span class="hljs-operator">=</span> <span class="hljs-const">1</span><span class="hljs-operator">;</span></code>
+<code id="37">    <span class="hljs-keyword">localparam</span> <span class="hljs-operator">[</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> <span class="hljs-const">_STATE_READY</span> <span class="hljs-operator">=</span> <span class="hljs-const">2</span><span class="hljs-operator">;</span></code>
+<code id="38"></code>
+<code id="39">    <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>   r_state<span class="hljs-operator">;</span></code>
+<code id="40">    <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>   state_next<span class="hljs-operator">;</span></code>
+<code id="41"></code>
+<code id="42">    <span class="hljs-keyword">assign</span> o_init_complete <span class="hljs-operator">=</span> <span class="hljs-operator">(</span>r_state <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">_STATE_READY</span><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="43">    <span class="hljs-keyword">assign</span> o_ready <span class="hljs-operator">=</span> o_init_complete <span class="hljs-operator">&amp;</span> <span class="hljs-operator">~</span>i_halt<span class="hljs-operator">;</span></code>
+<code id="44"></code>
+<code id="45">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span><span class="hljs-keyword">posedge</span> gated_clk<span class="hljs-operator">,</span> <span class="hljs-keyword">negedge</span> arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="46">        <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="47">            r_state <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-const">_STATE_UNINIT</span><span class="hljs-operator">;</span></code>
+<code id="48">        <span class="hljs-keyword">end</span></code>
+<code id="49">        <span class="hljs-keyword">else</span> <span class="hljs-keyword">begin</span></code>
+<code id="50">            r_state <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> state_next<span class="hljs-operator">;</span></code>
+<code id="51">        <span class="hljs-keyword">end</span></code>
+<code id="52">    <span class="hljs-keyword">end</span></code>
+<code id="53"></code>
+<code id="54">    <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>    r_addr_next<span class="hljs-operator">;</span> </code>
+<code id="55">    <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span><span class="hljs-const">ROW_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>     r_data_next<span class="hljs-operator">;</span> </code>
+<code id="56">    <span class="hljs-keyword">reg</span>                     r_wen_next<span class="hljs-operator">;</span>  </code>
+<code id="57">    <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span><span class="hljs-const">NUM_BLOCKS</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>    r_wmask_next<span class="hljs-operator">;</span></code>
+<code id="58">    <span class="hljs-keyword">reg</span>                     r_valid_next<span class="hljs-operator">;</span></code>
+<code id="59"></code>
+<code id="60">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span><span class="hljs-keyword">posedge</span> gated_clk<span class="hljs-operator">,</span> <span class="hljs-keyword">negedge</span> arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="61">        <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="62">            o_addr  <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="63">            o_data  <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">ROW_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="64">            o_wen   <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="65">            o_wmask <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">NUM_BLOCKS</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="66">            o_valid <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="67">        <span class="hljs-keyword">end</span></code>
+<code id="68">        <span class="hljs-keyword">else</span> <span class="hljs-keyword">begin</span></code>
+<code id="69">            o_addr  <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> r_addr_next<span class="hljs-operator">;</span> </code>
+<code id="70">            o_data  <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> r_data_next<span class="hljs-operator">;</span> </code>
+<code id="71">            o_wen   <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> r_wen_next<span class="hljs-operator">;</span>  </code>
+<code id="72">            o_wmask <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> r_wmask_next<span class="hljs-operator">;</span></code>
+<code id="73">            o_valid <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> r_valid_next<span class="hljs-operator">;</span></code>
+<code id="74">        <span class="hljs-keyword">end</span></code>
+<code id="75">    <span class="hljs-keyword">end</span></code>
+<code id="76"></code>
+<code id="77">    <span class="hljs-keyword">wire</span> w_counter_stop_reached<span class="hljs-operator">;</span></code>
+<code id="78"></code>
+<code id="79">    <span class="hljs-comment">// next state logic</span></code>
+<code id="80">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span>*<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="81">        <span class="hljs-keyword">case</span><span class="hljs-operator">(</span>r_state<span class="hljs-operator">)</span></code>
+<code id="82">            <span class="hljs-const">_STATE_UNINIT</span> <span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="83">                state_next <span class="hljs-operator">=</span> arst_n ? <span class="hljs-const">_STATE_BUSY</span> <span class="hljs-operator">:</span> <span class="hljs-const">_STATE_UNINIT</span><span class="hljs-operator">;</span> </code>
+<code id="84">            <span class="hljs-keyword">end</span></code>
+<code id="85">            </code>
+<code id="86">            <span class="hljs-const">_STATE_BUSY</span> <span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="87">                state_next <span class="hljs-operator">=</span> w_counter_stop_reached ? <span class="hljs-const">_STATE_READY</span> <span class="hljs-operator">:</span> <span class="hljs-const">_STATE_BUSY</span><span class="hljs-operator">;</span></code>
+<code id="88">            <span class="hljs-keyword">end</span></code>
+<code id="89"></code>
+<code id="90">            <span class="hljs-const">_STATE_READY</span> <span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="91">                state_next <span class="hljs-operator">=</span> <span class="hljs-const">_STATE_READY</span><span class="hljs-operator">;</span></code>
+<code id="92">            <span class="hljs-keyword">end</span></code>
+<code id="93"></code>
+<code id="94">            <span class="hljs-keyword">default</span><span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="95">                state_next <span class="hljs-operator">=</span> <span class="hljs-const">_STATE_UNINIT</span><span class="hljs-operator">;</span></code>
+<code id="96">            <span class="hljs-keyword">end</span></code>
+<code id="97">        <span class="hljs-keyword">endcase</span></code>
+<code id="98">    <span class="hljs-keyword">end</span></code>
+<code id="99"></code>
+<code id="100">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">COUNTER_STOP</span> <span class="hljs-operator">=</span> <span class="hljs-const">2</span>**<span class="hljs-operator">(</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="101">    <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> r_counter<span class="hljs-operator">;</span></code>
+<code id="102"></code>
+<code id="103">    <span class="hljs-keyword">assign</span> w_counter_stop_reached <span class="hljs-operator">=</span> <span class="hljs-operator">(</span>r_counter <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">COUNTER_STOP</span><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="104"></code>
+<code id="105">    <span class="hljs-comment">// counter</span></code>
+<code id="106">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span><span class="hljs-keyword">posedge</span> gated_clk<span class="hljs-operator">,</span> <span class="hljs-keyword">negedge</span> arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="107">        <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="108">            r_counter <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">ADDR_WIDTH</span>+<span class="hljs-const">1</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="109">        <span class="hljs-keyword">end</span></code>
+<code id="110">        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>w_counter_stop_reached <span class="hljs-operator">&amp;</span> <span class="hljs-operator">(</span>r_state <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">_STATE_BUSY</span><span class="hljs-operator">)</span><span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="111">            r_counter <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> r_counter + <span class="hljs-const">1</span><span class="hljs-operator">;</span></code>
+<code id="112">        <span class="hljs-keyword">end</span></code>
+<code id="113">    <span class="hljs-keyword">end</span></code>
+<code id="114"></code>
+<code id="115">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span>*<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="116">        <span class="hljs-keyword">case</span> <span class="hljs-operator">(</span>r_state<span class="hljs-operator">)</span></code>
+<code id="117">            <span class="hljs-const">_STATE_UNINIT</span><span class="hljs-operator">,</span> <span class="hljs-const">_STATE_READY</span> <span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="118">                r_addr_next     <span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="119">                r_data_next     <span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">ROW_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="120">                r_wen_next      <span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="121">                r_wmask_next    <span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">NUM_BLOCKS</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="122">                r_valid_next    <span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="123">            <span class="hljs-keyword">end</span> </code>
+<code id="124">        </code>
+<code id="125">            <span class="hljs-const">_STATE_BUSY</span> <span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="126">                r_addr_next     <span class="hljs-operator">=</span> r_counter<span class="hljs-operator">[</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span><span class="hljs-operator">;</span></code>
+<code id="127">                r_data_next     <span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">ROW_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="128">                r_wen_next      <span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b1<span class="hljs-operator">;</span></code>
+<code id="129">                r_wmask_next    <span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">NUM_BLOCKS</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b1<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="130">                r_valid_next    <span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b1<span class="hljs-operator">;</span></code>
+<code id="131">            <span class="hljs-keyword">end</span> </code>
+<code id="132">            <span class="hljs-keyword">default</span><span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="133">                r_addr_next     <span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="134">                r_data_next     <span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">ROW_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="135">                r_wen_next      <span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="136">                r_wmask_next    <span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">NUM_BLOCKS</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="137">                r_valid_next    <span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="138">            <span class="hljs-keyword">end</span> </code>
+<code id="139">        <span class="hljs-keyword">endcase</span></code>
+<code id="140">    <span class="hljs-keyword">end</span></code>
+<code id="141"></code>
+<code id="142"><span class="hljs-keyword">endmodule</span></code>
+</pre>
+  </body>
+</html>

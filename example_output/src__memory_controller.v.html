@@ -1,0 +1,195 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="rtl_html_style.css">
+  </head>
+  <body>
+    <p>File path: src/memory_controller.v</p>
+    <hr>
+    <pre class="code">
+<code id="1">`timescale <span class="hljs-const">1</span>ns<span class="hljs-operator">/</span><span class="hljs-const">1</span>ps</code>
+<code id="2"></code>
+<code id="3"><span class="hljs-operator">/</span>*</code>
+<code id="4">    <span class="hljs-const">U</span>sage <span class="hljs-const">N</span>ote<span class="hljs-operator">:</span></code>
+<code id="5">    <span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span><span class="hljs-operator">-</span></code>
+<code id="6">    <span class="hljs-const">T</span>he data received on the falling <span class="hljs-keyword">edge</span> is <span class="hljs-keyword">always</span> assumed to be the lower half <span class="hljs-operator">(</span>bits <span class="hljs-const">39</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">)</span></code>
+<code id="7">    <span class="hljs-const">A</span> complete packet consists of sending bits <span class="hljs-operator">[</span><span class="hljs-const">39</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> on the falling <span class="hljs-keyword">edge</span> <span class="hljs-keyword">and</span> bits <span class="hljs-operator">[</span><span class="hljs-const">79</span><span class="hljs-operator">:</span><span class="hljs-const">40</span><span class="hljs-operator">]</span>...</code>
+<code id="8">    ...on the rising <span class="hljs-keyword">edge</span>. </code>
+<code id="9">    <span class="hljs-const">F</span>or the packet to be valid<span class="hljs-operator">,</span> the valid <span class="hljs-keyword">bit</span> has to be asserted <span class="hljs-keyword">for</span> both rising <span class="hljs-keyword">and</span> falling edges.</code>
+<code id="10">    </code>
+<code id="11">*<span class="hljs-operator">/</span></code>
+<code id="12"></code>
+<code id="13"><span class="hljs-keyword">module</span> memory_controller<span class="hljs-operator">(</span></code>
+<code id="14">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>                i_block_addr<span class="hljs-operator">,</span> <span class="hljs-comment">// from miss handler</span></code>
+<code id="15">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                    i_block_addr_valid<span class="hljs-operator">,</span></code>
+<code id="16"></code>
+<code id="17">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                    i_initiate_req<span class="hljs-operator">,</span> <span class="hljs-comment">// from contorl unit</span></code>
+<code id="18">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                    i_ir_valid<span class="hljs-operator">,</span> <span class="hljs-comment">// ir == initiate request</span></code>
+<code id="19"></code>
+<code id="20">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">EXT_MEM_DATA_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>        i_mem_data<span class="hljs-operator">,</span> <span class="hljs-comment">// from memory</span></code>
+<code id="21">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                    i_mem_data_valid<span class="hljs-operator">,</span> </code>
+<code id="22"></code>
+<code id="23">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                    clk<span class="hljs-operator">,</span></code>
+<code id="24">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                    arst_n<span class="hljs-operator">,</span> </code>
+<code id="25">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                    i_halt<span class="hljs-operator">,</span> </code>
+<code id="26"></code>
+<code id="27">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>                o_mem_req_addr<span class="hljs-operator">,</span> <span class="hljs-comment">// to memory</span></code>
+<code id="28">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                                    o_mem_req_valid<span class="hljs-operator">,</span></code>
+<code id="29">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                                    o_mem_ready<span class="hljs-operator">,</span></code>
+<code id="30"></code>
+<code id="31">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                                    o_mem_data_received<span class="hljs-operator">,</span> <span class="hljs-comment">// to control unit </span></code>
+<code id="32">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                                    o_mem_data_rcvd_valid<span class="hljs-operator">,</span></code>
+<code id="33">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                                    o_ir_ready<span class="hljs-operator">,</span> </code>
+<code id="34"></code>
+<code id="35">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">reg</span>     <span class="hljs-operator">[</span><span class="hljs-const">MEM_BLOCK_DATA_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>      o_mem_block_data<span class="hljs-operator">,</span></code>
+<code id="36">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span>$clog2<span class="hljs-operator">(</span><span class="hljs-const">NUM_WORDS_P_BLOCK</span><span class="hljs-operator">)</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>   o_mem_num_words_rcvd<span class="hljs-operator">,</span> </code>
+<code id="37">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                                    o_mem_block_data_valid</code>
+<code id="38">   </code>
+<code id="39"><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="40">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">ADDR_WIDTH</span>           <span class="hljs-operator">=</span> <span class="hljs-const">16</span><span class="hljs-operator">;</span></code>
+<code id="41">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">EXT_MEM_DATA_WIDTH</span>   <span class="hljs-operator">=</span> <span class="hljs-const">40</span><span class="hljs-operator">;</span></code>
+<code id="42">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">INT_MEM_DATA_WIDTH</span>   <span class="hljs-operator">=</span> <span class="hljs-const">80</span><span class="hljs-operator">;</span> <span class="hljs-comment">// internal memory bus data width</span></code>
+<code id="43">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">MEM_BLOCK_DATA_WIDTH</span> <span class="hljs-operator">=</span> <span class="hljs-const">320</span><span class="hljs-operator">;</span></code>
+<code id="44">    </code>
+<code id="45">    <span class="hljs-keyword">localparam</span>  <span class="hljs-const">NUM_MEM_TRANSACTIONS</span>  <span class="hljs-operator">=</span> <span class="hljs-const">4</span><span class="hljs-operator">;</span> <span class="hljs-comment">//  MEM_BLOCK_DATA_WIDTH = NUM_MEM_TRANSACTIONS*INT_MEM_DATA_WIDTH</span></code>
+<code id="46">    <span class="hljs-keyword">localparam</span>  <span class="hljs-const">NUM_WORDS_P_BLOCK</span>     <span class="hljs-operator">=</span> <span class="hljs-const">16</span><span class="hljs-operator">;</span></code>
+<code id="47"></code>
+<code id="48">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">STATE_IDLE</span>           <span class="hljs-operator">=</span> <span class="hljs-const">0</span><span class="hljs-operator">;</span></code>
+<code id="49">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">STATE_MEM_REQUESTED</span>  <span class="hljs-operator">=</span> <span class="hljs-const">1</span><span class="hljs-operator">;</span></code>
+<code id="50">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">STATE_MEM_RECEIVING</span>  <span class="hljs-operator">=</span> <span class="hljs-const">2</span><span class="hljs-operator">;</span></code>
+<code id="51">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">NUM_STATES</span> <span class="hljs-operator">=</span> <span class="hljs-const">3</span><span class="hljs-operator">;</span></code>
+<code id="52"></code>
+<code id="53">    <span class="hljs-comment">// uncomment if post-sta period is too small</span></code>
+<code id="54">    <span class="hljs-comment">// reg r_initiate_req;</span></code>
+<code id="55">    <span class="hljs-comment">// reg r_ir_valid;</span></code>
+<code id="56"></code>
+<code id="57">    <span class="hljs-comment">// always @(posedge clk, negedge arst_n) begin</span></code>
+<code id="58">    <span class="hljs-comment">//     if(~arst_n) begin</span></code>
+<code id="59">    <span class="hljs-comment">//         r_initiate_req &lt;= 1'b0;</span></code>
+<code id="60">    <span class="hljs-comment">//         r_ir_valid &lt;= 1'b0;</span></code>
+<code id="61">    <span class="hljs-comment">//     end</span></code>
+<code id="62">    <span class="hljs-comment">//     else if(~i_halt) begin</span></code>
+<code id="63">    <span class="hljs-comment">//         r_initiate_req  &lt;= i_initiate_req;</span></code>
+<code id="64">    <span class="hljs-comment">//         r_ir_valid      &lt;= i_ir_valid;</span></code>
+<code id="65">    <span class="hljs-comment">//     end</span></code>
+<code id="66">    <span class="hljs-comment">// end</span></code>
+<code id="67"></code>
+<code id="68">    <span class="hljs-keyword">wire</span> <span class="hljs-operator">[</span><span class="hljs-const">INT_MEM_DATA_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>   mb_mem_data<span class="hljs-operator">;</span></code>
+<code id="69">    <span class="hljs-keyword">wire</span>                            mb_mem_data_valid<span class="hljs-operator">;</span></code>
+<code id="70"></code>
+<code id="71">    memory_buffer memory_buffer_m<span class="hljs-operator">(</span></code>
+<code id="72">        .i_mem_data<span class="hljs-operator">(</span>i_mem_data<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="73">        .i_mem_data_valid<span class="hljs-operator">(</span>i_mem_data_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="74"></code>
+<code id="75">        .clk<span class="hljs-operator">(</span>clk<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="76">        .arst_n<span class="hljs-operator">(</span>arst_n<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="77">        .i_halt<span class="hljs-operator">(</span>i_halt<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="78"></code>
+<code id="79">        .o_mem_data<span class="hljs-operator">(</span>mb_mem_data<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="80">        .o_mem_data_valid<span class="hljs-operator">(</span>mb_mem_data_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="81">        .o_ready<span class="hljs-operator">(</span>o_ir_ready<span class="hljs-operator">)</span></code>
+<code id="82">    <span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="83">  </code>
+<code id="84"></code>
+<code id="85"></code>
+<code id="86">    <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span>$clog2<span class="hljs-operator">(</span><span class="hljs-const">NUM_STATES</span><span class="hljs-operator">)</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>    r_state<span class="hljs-operator">;</span></code>
+<code id="87">    <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span>$clog2<span class="hljs-operator">(</span><span class="hljs-const">NUM_STATES</span><span class="hljs-operator">)</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>    w_state<span class="hljs-operator">;</span> </code>
+<code id="88">    </code>
+<code id="89">    <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span>$clog2<span class="hljs-operator">(</span><span class="hljs-const">NUM_MEM_TRANSACTIONS</span><span class="hljs-operator">)</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> r_transactions_counter<span class="hljs-operator">;</span></code>
+<code id="90">    <span class="hljs-keyword">wire</span> w_all_words_received<span class="hljs-operator">;</span></code>
+<code id="91"></code>
+<code id="92">    <span class="hljs-keyword">assign</span> w_all_words_received <span class="hljs-operator">=</span> <span class="hljs-operator">(</span>r_transactions_counter <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">NUM_MEM_TRANSACTIONS</span><span class="hljs-operator">)</span><span class="hljs-operator">;</span> </code>
+<code id="93">    <span class="hljs-keyword">assign</span> o_mem_num_words_rcvd <span class="hljs-operator">=</span> r_transactions_counter <span class="hljs-operator">&lt;</span><span class="hljs-operator">&lt;</span> <span class="hljs-const">2</span><span class="hljs-operator">;</span></code>
+<code id="94"></code>
+<code id="95">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span><span class="hljs-keyword">posedge</span> clk<span class="hljs-operator">,</span> <span class="hljs-keyword">negedge</span> arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="96">        <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="97">            r_state <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-operator">{</span>$clog2<span class="hljs-operator">(</span><span class="hljs-const">NUM_STATES</span><span class="hljs-operator">)</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="98">        <span class="hljs-keyword">end</span></code>
+<code id="99">        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>i_halt<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="100">            r_state <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> w_state<span class="hljs-operator">;</span></code>
+<code id="101">        <span class="hljs-keyword">end</span></code>
+<code id="102">    <span class="hljs-keyword">end</span></code>
+<code id="103"></code>
+<code id="104">    <span class="hljs-comment">// FSM Next state logic</span></code>
+<code id="105">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span>*<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="106">        <span class="hljs-keyword">case</span><span class="hljs-operator">(</span>r_state<span class="hljs-operator">)</span></code>
+<code id="107">        <span class="hljs-const">STATE_IDLE</span> <span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="108">            w_state <span class="hljs-operator">=</span> <span class="hljs-operator">(</span>i_initiate_req <span class="hljs-operator">&amp;</span> i_ir_valid<span class="hljs-operator">)</span> ? <span class="hljs-const">STATE_MEM_REQUESTED</span> <span class="hljs-operator">:</span> <span class="hljs-const">STATE_IDLE</span><span class="hljs-operator">;</span></code>
+<code id="109">        <span class="hljs-keyword">end</span></code>
+<code id="110">        <span class="hljs-const">STATE_MEM_REQUESTED</span> <span class="hljs-operator">:</span>  <span class="hljs-keyword">begin</span></code>
+<code id="111">            w_state <span class="hljs-operator">=</span> <span class="hljs-operator">(</span>mb_mem_data_valid<span class="hljs-operator">)</span> ? <span class="hljs-const">STATE_MEM_RECEIVING</span> <span class="hljs-operator">:</span> <span class="hljs-const">STATE_MEM_REQUESTED</span><span class="hljs-operator">;</span></code>
+<code id="112">        <span class="hljs-keyword">end</span></code>
+<code id="113">        <span class="hljs-const">STATE_MEM_RECEIVING</span> <span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="114">            w_state <span class="hljs-operator">=</span> <span class="hljs-operator">(</span>w_all_words_received<span class="hljs-operator">)</span> ? <span class="hljs-const">STATE_IDLE</span> <span class="hljs-operator">:</span> <span class="hljs-const">STATE_MEM_RECEIVING</span><span class="hljs-operator">;</span></code>
+<code id="115">        <span class="hljs-keyword">end</span> </code>
+<code id="116"></code>
+<code id="117">        <span class="hljs-keyword">default</span> <span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="118">            w_state <span class="hljs-operator">=</span> <span class="hljs-const">STATE_IDLE</span><span class="hljs-operator">;</span></code>
+<code id="119">        <span class="hljs-keyword">end</span></code>
+<code id="120">        <span class="hljs-keyword">endcase</span></code>
+<code id="121">    <span class="hljs-keyword">end</span></code>
+<code id="122"></code>
+<code id="123">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span><span class="hljs-keyword">negedge</span> clk<span class="hljs-operator">,</span> <span class="hljs-keyword">negedge</span> arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="124">        <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="125">            r_transactions_counter <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-operator">(</span>$clog2<span class="hljs-operator">(</span><span class="hljs-const">NUM_MEM_TRANSACTIONS</span><span class="hljs-operator">)</span>+<span class="hljs-const">1</span><span class="hljs-operator">)</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="126">        <span class="hljs-keyword">end</span></code>
+<code id="127">        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>i_halt <span class="hljs-operator">&amp;</span> <span class="hljs-operator">(</span></code>
+<code id="128">                <span class="hljs-operator">(</span><span class="hljs-operator">(</span>w_state <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_MEM_RECEIVING</span><span class="hljs-operator">)</span> <span class="hljs-operator">&amp;</span> mb_mem_data_valid<span class="hljs-operator">)</span> <span class="hljs-operator">|</span> </code>
+<code id="129">                <span class="hljs-operator">(</span>r_transactions_counter <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">NUM_MEM_TRANSACTIONS</span><span class="hljs-operator">)</span></code>
+<code id="130">            <span class="hljs-operator">)</span><span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="131">                </code>
+<code id="132">            r_transactions_counter <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-operator">(</span>r_transactions_counter <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">NUM_MEM_TRANSACTIONS</span><span class="hljs-operator">)</span> ? <span class="hljs-operator">{</span><span class="hljs-operator">(</span>$clog2<span class="hljs-operator">(</span><span class="hljs-const">NUM_MEM_TRANSACTIONS</span><span class="hljs-operator">)</span>+<span class="hljs-const">1</span><span class="hljs-operator">)</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span> <span class="hljs-operator">:</span></code>
+<code id="133">                                                                                           r_transactions_counter + <span class="hljs-const">1</span><span class="hljs-operator">;</span></code>
+<code id="134">        <span class="hljs-keyword">end</span></code>
+<code id="135">    <span class="hljs-keyword">end</span></code>
+<code id="136"></code>
+<code id="137">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span><span class="hljs-keyword">negedge</span> clk<span class="hljs-operator">,</span> <span class="hljs-keyword">negedge</span> arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="138">        <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="139">            o_mem_block_data <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">MEM_BLOCK_DATA_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="140">        <span class="hljs-keyword">end</span></code>
+<code id="141">        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>i_halt <span class="hljs-operator">&amp;</span> mb_mem_data_valid <span class="hljs-operator">&amp;</span></code>
+<code id="142">                <span class="hljs-operator">(</span><span class="hljs-operator">~</span>w_all_words_received <span class="hljs-operator">|</span> <span class="hljs-operator">(</span>w_state <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_MEM_RECEIVING</span><span class="hljs-operator">)</span><span class="hljs-operator">)</span><span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="143">            <span class="hljs-keyword">case</span><span class="hljs-operator">(</span>r_transactions_counter<span class="hljs-operator">)</span> <span class="hljs-comment">// elaborated to avoid synthesizing multiplier</span></code>
+<code id="144">            <span class="hljs-const">4</span>'d0<span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="145">                o_mem_block_data<span class="hljs-operator">[</span><span class="hljs-const">79</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> mb_mem_data<span class="hljs-operator">;</span></code>
+<code id="146">            <span class="hljs-keyword">end</span></code>
+<code id="147">            <span class="hljs-const">4</span>'d1<span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="148">                o_mem_block_data<span class="hljs-operator">[</span><span class="hljs-const">159</span><span class="hljs-operator">:</span><span class="hljs-const">80</span><span class="hljs-operator">]</span> <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> mb_mem_data<span class="hljs-operator">;</span></code>
+<code id="149">            <span class="hljs-keyword">end</span></code>
+<code id="150">            <span class="hljs-const">4</span>'d2<span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="151">                o_mem_block_data<span class="hljs-operator">[</span><span class="hljs-const">239</span><span class="hljs-operator">:</span><span class="hljs-const">160</span><span class="hljs-operator">]</span> <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> mb_mem_data<span class="hljs-operator">;</span></code>
+<code id="152">            <span class="hljs-keyword">end</span></code>
+<code id="153">            <span class="hljs-const">4</span>'d3<span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="154">                o_mem_block_data<span class="hljs-operator">[</span><span class="hljs-const">319</span><span class="hljs-operator">:</span><span class="hljs-const">240</span><span class="hljs-operator">]</span> <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> mb_mem_data<span class="hljs-operator">;</span></code>
+<code id="155">            <span class="hljs-keyword">end</span></code>
+<code id="156">            <span class="hljs-keyword">endcase</span></code>
+<code id="157">        <span class="hljs-keyword">end</span></code>
+<code id="158">    <span class="hljs-keyword">end</span></code>
+<code id="159">    </code>
+<code id="160">    <span class="hljs-keyword">reg</span> r_mem_block_data_valid<span class="hljs-operator">;</span></code>
+<code id="161">    <span class="hljs-keyword">assign</span> o_mem_block_data_valid <span class="hljs-operator">=</span> w_all_words_received <span class="hljs-operator">|</span> r_mem_block_data_valid<span class="hljs-operator">;</span></code>
+<code id="162">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span><span class="hljs-keyword">posedge</span> clk<span class="hljs-operator">,</span> <span class="hljs-keyword">negedge</span> arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="163">        <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="164">            r_mem_block_data_valid <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="165">        <span class="hljs-keyword">end</span></code>
+<code id="166">        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>i_halt<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="167">            <span class="hljs-keyword">if</span><span class="hljs-operator">(</span>w_all_words_received<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="168">                r_mem_block_data_valid <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b1<span class="hljs-operator">;</span></code>
+<code id="169">            <span class="hljs-keyword">end</span> </code>
+<code id="170">            <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span><span class="hljs-operator">(</span>w_state <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_MEM_REQUESTED</span><span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="171">                r_mem_block_data_valid <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="172">            <span class="hljs-keyword">end</span></code>
+<code id="173">        <span class="hljs-keyword">end</span></code>
+<code id="174">    <span class="hljs-keyword">end</span></code>
+<code id="175"></code>
+<code id="176">    <span class="hljs-keyword">assign</span> o_mem_req_addr <span class="hljs-operator">=</span> <span class="hljs-operator">(</span><span class="hljs-operator">(</span>w_state <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_MEM_REQUESTED</span><span class="hljs-operator">)</span> <span class="hljs-operator">&amp;</span> r_state <span class="hljs-operator">!=</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_MEM_REQUESTED</span><span class="hljs-operator">)</span>  ? i_block_addr <span class="hljs-operator">:</span></code>
+<code id="177">                                                                                            <span class="hljs-operator">{</span><span class="hljs-const">ADDR_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="178"></code>
+<code id="179">    <span class="hljs-keyword">assign</span> o_mem_req_valid <span class="hljs-operator">=</span> <span class="hljs-operator">(</span><span class="hljs-operator">(</span>w_state <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_MEM_REQUESTED</span><span class="hljs-operator">)</span> <span class="hljs-operator">&amp;</span> r_state <span class="hljs-operator">!=</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_MEM_REQUESTED</span><span class="hljs-operator">)</span> ? i_block_addr_valid <span class="hljs-operator">:</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="180"></code>
+<code id="181">    <span class="hljs-keyword">assign</span> o_mem_ready <span class="hljs-operator">=</span> <span class="hljs-operator">(</span><span class="hljs-operator">(</span>r_state <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_MEM_REQUESTED</span><span class="hljs-operator">)</span> <span class="hljs-operator">|</span> <span class="hljs-operator">(</span>w_state <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_MEM_RECEIVING</span><span class="hljs-operator">)</span><span class="hljs-operator">)</span> <span class="hljs-operator">&amp;</span> <span class="hljs-operator">~</span>i_halt<span class="hljs-operator">;</span></code>
+<code id="182">    <span class="hljs-keyword">assign</span> o_mem_data_received <span class="hljs-operator">=</span> <span class="hljs-operator">(</span>w_all_words_received <span class="hljs-operator">&amp;</span> <span class="hljs-operator">(</span>r_state <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">STATE_MEM_RECEIVING</span><span class="hljs-operator">)</span><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="183">    <span class="hljs-keyword">assign</span> o_mem_data_rcvd_valid <span class="hljs-operator">=</span> <span class="hljs-operator">~</span>i_halt<span class="hljs-operator">;</span> </code>
+<code id="184"><span class="hljs-keyword">endmodule</span></code>
+</pre>
+  </body>
+</html>

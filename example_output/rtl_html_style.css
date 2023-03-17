@@ -1,0 +1,92 @@
+
+body {
+    background-color: #fafafa;
+}
+.hljs-comment {
+  color: blue;
+}
+.hljs-keyword {
+    color: #a72a2c;
+    font-weight: bold;
+}
+.hljs-const {
+    color: #ff00ff;
+}
+.hljs-operator {
+    color: blue;
+}
+p {
+    font-family: sans-serif;
+}
+
+pre {
+    font-size: 14px;
+}
+
+pre.code {
+    white-space: pre-wrap;
+}
+pre.code:before {
+    counter-reset: listing;
+}
+pre.code code {
+    counter-increment: listing;
+}
+pre.code code:before {
+    content: counter(listing) "| ";
+    display: inline-block;
+    width: 5em;         
+    padding-left: none; 
+    margin-left: none;  
+    text-align: right;  
+    color: gray
+}
+/* Section Animation */
+@import "compass/css3";
+
+:target {
+    -webkit-animation: target-fade 3600s;
+    -moz-animation: target-fade 3600s;
+    -o-animation: target-fade 3600s;
+    animation: target-fade 3600s;
+}
+
+@-webkit-keyframes target-fade {
+    from {
+    background-color: yellow;
+    }
+
+    to {
+    background-color: transparent;
+    }
+}
+
+@-moz-keyframes target-fade {
+    from {
+    background-color: yellow;
+    }
+
+    to {
+    background-color: transparent;
+    }
+}
+
+@-o-keyframes target-fade {
+    from {
+    background-color: yellow;
+    }
+
+    to {
+    background-color: transparent;
+    }
+}
+
+@keyframes target-fade {
+    from {
+    background-color: yellow;
+    }
+
+    to {
+    background-color: transparent;
+    }
+}

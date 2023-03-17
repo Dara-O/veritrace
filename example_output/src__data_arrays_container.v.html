@@ -1,0 +1,157 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="rtl_html_style.css">
+  </head>
+  <body>
+    <p>File path: src/data_arrays_container.v</p>
+    <hr>
+    <pre class="code">
+<code id="1">`timescale <span class="hljs-const">1</span>ps<span class="hljs-operator">/</span><span class="hljs-const">1</span>ps</code>
+<code id="2"></code>
+<code id="3"><span class="hljs-keyword">module</span> data_arrays_container <span class="hljs-operator">(</span></code>
+<code id="4">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">SET_BITS_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>        i_r_set_bits<span class="hljs-operator">,</span></code>
+<code id="5">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span>$clog2<span class="hljs-operator">(</span><span class="hljs-const">NUM_WAYS</span><span class="hljs-operator">)</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>      i_r_way_index<span class="hljs-operator">,</span></code>
+<code id="6">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">B_OFFSET_BITS_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>   i_r_block_offset_bits<span class="hljs-operator">,</span></code>
+<code id="7">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                i_r_valid<span class="hljs-operator">,</span></code>
+<code id="8">    </code>
+<code id="9">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">SET_BITS_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>        i_w_set_bits<span class="hljs-operator">,</span></code>
+<code id="10">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span>$clog2<span class="hljs-operator">(</span><span class="hljs-const">NUM_WAYS</span><span class="hljs-operator">)</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>      i_w_way_index<span class="hljs-operator">,</span></code>
+<code id="11">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">B_OFFSET_BITS_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">3</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>   i_w_block_offset_bits<span class="hljs-operator">,</span></code>
+<code id="12">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>    <span class="hljs-operator">[</span><span class="hljs-const">WRITE_WORD_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>      i_w_data<span class="hljs-operator">,</span></code>
+<code id="13">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                i_w_valid<span class="hljs-operator">,</span></code>
+<code id="14"></code>
+<code id="15">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                clk<span class="hljs-operator">,</span></code>
+<code id="16">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                arst_n<span class="hljs-operator">,</span></code>
+<code id="17">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                i_halt_all<span class="hljs-operator">,</span></code>
+<code id="18">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                i_stop_read_clk<span class="hljs-operator">,</span></code>
+<code id="19">    <span class="hljs-keyword">input</span>   <span class="hljs-keyword">wire</span>                                i_stop_write_clk<span class="hljs-operator">,</span></code>
+<code id="20"></code>
+<code id="21">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">reg</span>     <span class="hljs-operator">[</span><span class="hljs-const">READ_WORD_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>       o_word_data<span class="hljs-operator">,</span></code>
+<code id="22">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">reg</span>                                 o_valid<span class="hljs-operator">,</span></code>
+<code id="23"></code>
+<code id="24">    <span class="hljs-keyword">output</span>  <span class="hljs-keyword">wire</span>                                o_ready</code>
+<code id="25"><span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="26">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">SET_BITS_WIDTH</span>  <span class="hljs-operator">=</span> <span class="hljs-const">4</span><span class="hljs-operator">;</span>    </code>
+<code id="27">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">B_OFFSET_BITS_WIDTH</span> <span class="hljs-operator">=</span> <span class="hljs-const">4</span><span class="hljs-operator">;</span></code>
+<code id="28">    </code>
+<code id="29">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">READ_WORD_WIDTH</span>  <span class="hljs-operator">=</span> <span class="hljs-const">20</span><span class="hljs-operator">;</span></code>
+<code id="30">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">WRITE_WORD_WIDTH</span> <span class="hljs-operator">=</span> <span class="hljs-const">20</span>*<span class="hljs-const">4</span><span class="hljs-operator">;</span><span class="hljs-comment">// 4 == number of srams</span></code>
+<code id="31">    <span class="hljs-keyword">localparam</span> <span class="hljs-const">NUM_WAYS</span>         <span class="hljs-operator">=</span> <span class="hljs-const">4</span><span class="hljs-operator">;</span></code>
+<code id="32"></code>
+<code id="33">    <span class="hljs-keyword">assign</span> o_ready <span class="hljs-operator">=</span> <span class="hljs-operator">~</span><span class="hljs-operator">(</span>i_halt_all<span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="34"></code>
+<code id="35">    <span class="hljs-keyword">wire</span> write_clk<span class="hljs-operator">;</span></code>
+<code id="36">    clock_gater cg_read <span class="hljs-operator">(</span></code>
+<code id="37">        .clk<span class="hljs-operator">(</span>clk<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="38">        .stop_clock<span class="hljs-operator">(</span>i_halt_all <span class="hljs-operator">|</span> i_stop_write_clk<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="39">        .gated_clock<span class="hljs-operator">(</span>write_clk<span class="hljs-operator">)</span></code>
+<code id="40">    <span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="41"></code>
+<code id="42">    <span class="hljs-keyword">wire</span> read_clk<span class="hljs-operator">;</span></code>
+<code id="43">    clock_gater cg_write <span class="hljs-operator">(</span></code>
+<code id="44">        .clk<span class="hljs-operator">(</span>clk<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="45">        .stop_clock<span class="hljs-operator">(</span>i_halt_all <span class="hljs-operator">|</span> i_stop_read_clk<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="46">        .gated_clock<span class="hljs-operator">(</span>read_clk<span class="hljs-operator">)</span></code>
+<code id="47">    <span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="48"></code>
+<code id="49">    <span class="hljs-keyword">wire</span> <span class="hljs-operator">[</span><span class="hljs-const">READ_WORD_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>   sram0_data<span class="hljs-operator">;</span></code>
+<code id="50">    sky130_sram_1kbytes_1r1w_256x20_20 sram0 <span class="hljs-operator">(</span></code>
+<code id="51">        .clk0<span class="hljs-operator">(</span>write_clk<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="52">        .csb0<span class="hljs-operator">(</span><span class="hljs-operator">~</span>i_w_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="53">        .addr0<span class="hljs-operator">(</span><span class="hljs-operator">{</span>i_w_set_bits<span class="hljs-operator">,</span> i_w_way_index<span class="hljs-operator">,</span> i_w_block_offset_bits<span class="hljs-operator">}</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="54">        .din0<span class="hljs-operator">(</span>i_w_data<span class="hljs-operator">[</span><span class="hljs-const">19</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="55"></code>
+<code id="56">        .clk1<span class="hljs-operator">(</span>read_clk<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="57">        .csb1<span class="hljs-operator">(</span><span class="hljs-operator">~</span><span class="hljs-operator">(</span>i_r_valid <span class="hljs-operator">&amp;</span> <span class="hljs-operator">(</span>i_r_block_offset_bits<span class="hljs-operator">[</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">2</span>'b00<span class="hljs-operator">)</span><span class="hljs-operator">)</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="58">        .addr1<span class="hljs-operator">(</span><span class="hljs-operator">{</span>i_r_set_bits<span class="hljs-operator">,</span> i_r_way_index<span class="hljs-operator">,</span> i_r_block_offset_bits<span class="hljs-operator">[</span><span class="hljs-const">3</span><span class="hljs-operator">:</span><span class="hljs-const">2</span><span class="hljs-operator">]</span><span class="hljs-operator">}</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="59">        .dout1<span class="hljs-operator">(</span>sram0_data<span class="hljs-operator">)</span></code>
+<code id="60">    <span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="61"></code>
+<code id="62">    <span class="hljs-keyword">wire</span> <span class="hljs-operator">[</span><span class="hljs-const">READ_WORD_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>   sram1_data<span class="hljs-operator">;</span></code>
+<code id="63">    sky130_sram_1kbytes_1r1w_256x20_20 sram1 <span class="hljs-operator">(</span></code>
+<code id="64">        .clk0<span class="hljs-operator">(</span>write_clk<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="65">        .csb0<span class="hljs-operator">(</span><span class="hljs-operator">~</span>i_w_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="66">        .addr0<span class="hljs-operator">(</span><span class="hljs-operator">{</span>i_w_set_bits<span class="hljs-operator">,</span> i_w_way_index<span class="hljs-operator">,</span> i_w_block_offset_bits<span class="hljs-operator">}</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="67">        .din0<span class="hljs-operator">(</span>i_w_data<span class="hljs-operator">[</span><span class="hljs-const">39</span><span class="hljs-operator">:</span><span class="hljs-const">20</span><span class="hljs-operator">]</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="68"></code>
+<code id="69">        .clk1<span class="hljs-operator">(</span>read_clk<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="70">        .csb1<span class="hljs-operator">(</span><span class="hljs-operator">~</span><span class="hljs-operator">(</span>i_r_valid <span class="hljs-operator">&amp;</span> <span class="hljs-operator">(</span>i_r_block_offset_bits<span class="hljs-operator">[</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">2</span>'b01<span class="hljs-operator">)</span><span class="hljs-operator">)</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="71">        .addr1<span class="hljs-operator">(</span><span class="hljs-operator">{</span>i_r_set_bits<span class="hljs-operator">,</span> i_r_way_index<span class="hljs-operator">,</span> i_r_block_offset_bits<span class="hljs-operator">[</span><span class="hljs-const">3</span><span class="hljs-operator">:</span><span class="hljs-const">2</span><span class="hljs-operator">]</span><span class="hljs-operator">}</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="72">        .dout1<span class="hljs-operator">(</span>sram1_data<span class="hljs-operator">)</span></code>
+<code id="73">    <span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="74"></code>
+<code id="75">    <span class="hljs-keyword">wire</span> <span class="hljs-operator">[</span><span class="hljs-const">READ_WORD_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>   sram2_data<span class="hljs-operator">;</span></code>
+<code id="76">    sky130_sram_1kbytes_1r1w_256x20_20 sram2 <span class="hljs-operator">(</span></code>
+<code id="77">        .clk0<span class="hljs-operator">(</span>write_clk<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="78">        .csb0<span class="hljs-operator">(</span><span class="hljs-operator">~</span>i_w_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="79">        .addr0<span class="hljs-operator">(</span><span class="hljs-operator">{</span>i_w_set_bits<span class="hljs-operator">,</span> i_w_way_index<span class="hljs-operator">,</span> i_w_block_offset_bits<span class="hljs-operator">}</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="80">        .din0<span class="hljs-operator">(</span>i_w_data<span class="hljs-operator">[</span><span class="hljs-const">59</span><span class="hljs-operator">:</span><span class="hljs-const">40</span><span class="hljs-operator">]</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="81"></code>
+<code id="82">        .clk1<span class="hljs-operator">(</span>read_clk<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="83">        .csb1<span class="hljs-operator">(</span><span class="hljs-operator">~</span><span class="hljs-operator">(</span>i_r_valid <span class="hljs-operator">&amp;</span> <span class="hljs-operator">(</span>i_r_block_offset_bits<span class="hljs-operator">[</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">2</span>'b10<span class="hljs-operator">)</span><span class="hljs-operator">)</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="84">        .addr1<span class="hljs-operator">(</span><span class="hljs-operator">{</span>i_r_set_bits<span class="hljs-operator">,</span> i_r_way_index<span class="hljs-operator">,</span> i_r_block_offset_bits<span class="hljs-operator">[</span><span class="hljs-const">3</span><span class="hljs-operator">:</span><span class="hljs-const">2</span><span class="hljs-operator">]</span><span class="hljs-operator">}</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="85">        .dout1<span class="hljs-operator">(</span>sram2_data<span class="hljs-operator">)</span></code>
+<code id="86">    <span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="87"></code>
+<code id="88">    <span class="hljs-keyword">wire</span> <span class="hljs-operator">[</span><span class="hljs-const">READ_WORD_WIDTH</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>   sram3_data<span class="hljs-operator">;</span></code>
+<code id="89">    sky130_sram_1kbytes_1r1w_256x20_20 sram3 <span class="hljs-operator">(</span></code>
+<code id="90">        .clk0<span class="hljs-operator">(</span>write_clk<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="91">        .csb0<span class="hljs-operator">(</span><span class="hljs-operator">~</span>i_w_valid<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="92">        .addr0<span class="hljs-operator">(</span><span class="hljs-operator">{</span>i_w_set_bits<span class="hljs-operator">,</span> i_w_way_index<span class="hljs-operator">,</span> i_w_block_offset_bits<span class="hljs-operator">}</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="93">        .din0<span class="hljs-operator">(</span>i_w_data<span class="hljs-operator">[</span><span class="hljs-const">79</span><span class="hljs-operator">:</span><span class="hljs-const">60</span><span class="hljs-operator">]</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="94"></code>
+<code id="95">        .clk1<span class="hljs-operator">(</span>read_clk<span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="96">        .csb1<span class="hljs-operator">(</span><span class="hljs-operator">~</span><span class="hljs-operator">(</span>i_r_valid <span class="hljs-operator">&amp;</span> <span class="hljs-operator">(</span>i_r_block_offset_bits<span class="hljs-operator">[</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> <span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span> <span class="hljs-const">2</span>'b11<span class="hljs-operator">)</span><span class="hljs-operator">)</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="97">        .addr1<span class="hljs-operator">(</span><span class="hljs-operator">{</span>i_r_set_bits<span class="hljs-operator">,</span> i_r_way_index<span class="hljs-operator">,</span> i_r_block_offset_bits<span class="hljs-operator">[</span><span class="hljs-const">3</span><span class="hljs-operator">:</span><span class="hljs-const">2</span><span class="hljs-operator">]</span><span class="hljs-operator">}</span><span class="hljs-operator">)</span><span class="hljs-operator">,</span></code>
+<code id="98">        .dout1<span class="hljs-operator">(</span>sram3_data<span class="hljs-operator">)</span></code>
+<code id="99">    <span class="hljs-operator">)</span><span class="hljs-operator">;</span></code>
+<code id="100"></code>
+<code id="101">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span><span class="hljs-keyword">posedge</span> clk<span class="hljs-operator">,</span> <span class="hljs-keyword">negedge</span> arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="102">        <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="103">            o_valid <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-const">1</span>'b0<span class="hljs-operator">;</span></code>
+<code id="104">        <span class="hljs-keyword">end</span></code>
+<code id="105">        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>i_halt_all<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="106">            o_valid <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> i_r_valid <span class="hljs-operator">&amp;</span> <span class="hljs-operator">~</span>i_stop_read_clk<span class="hljs-operator">;</span></code>
+<code id="107">        <span class="hljs-keyword">end</span></code>
+<code id="108">    <span class="hljs-keyword">end</span></code>
+<code id="109"></code>
+<code id="110">    <span class="hljs-keyword">reg</span> <span class="hljs-operator">[</span>$clog2<span class="hljs-operator">(</span><span class="hljs-const">NUM_WAYS</span><span class="hljs-operator">)</span><span class="hljs-operator">-</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span>    r_r_block_offset_bits<span class="hljs-operator">;</span></code>
+<code id="111">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span><span class="hljs-keyword">posedge</span> clk<span class="hljs-operator">,</span> <span class="hljs-keyword">negedge</span> arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="112">        <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>arst_n<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="113">            r_r_block_offset_bits <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> <span class="hljs-operator">{</span>$clog2<span class="hljs-operator">(</span><span class="hljs-const">NUM_WAYS</span><span class="hljs-operator">)</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="114">        <span class="hljs-keyword">end</span></code>
+<code id="115">        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span><span class="hljs-operator">(</span><span class="hljs-operator">~</span>i_halt_all<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="116">            r_r_block_offset_bits <span class="hljs-operator">&lt;</span><span class="hljs-operator">=</span> i_r_block_offset_bits<span class="hljs-operator">[</span><span class="hljs-const">1</span><span class="hljs-operator">:</span><span class="hljs-const">0</span><span class="hljs-operator">]</span> <span class="hljs-operator">&amp;</span> <span class="hljs-operator">{</span>$clog2<span class="hljs-operator">(</span><span class="hljs-const">NUM_WAYS</span><span class="hljs-operator">)</span><span class="hljs-operator">{</span><span class="hljs-operator">~</span>i_stop_read_clk<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="117">        <span class="hljs-keyword">end</span></code>
+<code id="118">    <span class="hljs-keyword">end</span></code>
+<code id="119"></code>
+<code id="120">    <span class="hljs-keyword">always</span> @<span class="hljs-operator">(</span>*<span class="hljs-operator">)</span> <span class="hljs-keyword">begin</span></code>
+<code id="121">        <span class="hljs-keyword">case</span><span class="hljs-operator">(</span>r_r_block_offset_bits<span class="hljs-operator">)</span></code>
+<code id="122">        <span class="hljs-const">2</span>'b11 <span class="hljs-operator">:</span>   <span class="hljs-keyword">begin</span></code>
+<code id="123">            o_word_data <span class="hljs-operator">=</span> sram3_data<span class="hljs-operator">;</span></code>
+<code id="124">        <span class="hljs-keyword">end</span></code>
+<code id="125"></code>
+<code id="126">        <span class="hljs-const">2</span>'b10 <span class="hljs-operator">:</span>   <span class="hljs-keyword">begin</span></code>
+<code id="127">            o_word_data <span class="hljs-operator">=</span> sram2_data<span class="hljs-operator">;</span></code>
+<code id="128">        <span class="hljs-keyword">end</span></code>
+<code id="129">        </code>
+<code id="130">        <span class="hljs-const">2</span>'b01 <span class="hljs-operator">:</span>   <span class="hljs-keyword">begin</span></code>
+<code id="131">            o_word_data <span class="hljs-operator">=</span> sram1_data<span class="hljs-operator">;</span></code>
+<code id="132">        <span class="hljs-keyword">end</span></code>
+<code id="133"></code>
+<code id="134">        <span class="hljs-const">2</span>'b00 <span class="hljs-operator">:</span>   <span class="hljs-keyword">begin</span></code>
+<code id="135">            o_word_data <span class="hljs-operator">=</span> sram0_data<span class="hljs-operator">;</span></code>
+<code id="136">        <span class="hljs-keyword">end</span></code>
+<code id="137"></code>
+<code id="138">        <span class="hljs-keyword">default</span> <span class="hljs-operator">:</span> <span class="hljs-keyword">begin</span></code>
+<code id="139">            o_word_data <span class="hljs-operator">=</span> <span class="hljs-operator">{</span><span class="hljs-const">READ_WORD_WIDTH</span><span class="hljs-operator">{</span><span class="hljs-const">1</span>'b0<span class="hljs-operator">}</span><span class="hljs-operator">}</span><span class="hljs-operator">;</span></code>
+<code id="140">        <span class="hljs-keyword">end</span></code>
+<code id="141"></code>
+<code id="142">        <span class="hljs-keyword">endcase</span></code>
+<code id="143">    <span class="hljs-keyword">end</span></code>
+<code id="144">  </code>
+<code id="145"></code>
+<code id="146"><span class="hljs-keyword">endmodule</span></code>
+</pre>
+  </body>
+</html>
